@@ -1,9 +1,9 @@
 # Secrets
-.discrub_cache
+.cache/
 
 # Build
 build/
-options.json
+config.json
 
 # Ignore Mac DS_Store files
 .DS_Store

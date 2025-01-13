@@ -1,17 +1,27 @@
-CC = gcc
-CFLAGS = -std=c89 -Ofast -Wall -Wextra
-LIBS = `pkg-config openssl --cflags --libs`
-TARGET = build/discrub
-SRCS = $(wildcard src/**.c)
-NCLUDE = -Iinclude
+CC ?= gcc
+CFLAGS = -std=c89 -Ofast -Wall -Wextra -Iinclude/
+BUILD = build
+SRCS = $(wildcard src/*.c)
+OBJS = $(SRCS:src/%.c=$(BUILD)/%.o)
+LIBS = $(shell pkg-config sdl3 sdl3-ttf --cflags --libs)
 
-all: $(TARGET)
+.PHONY: all
 
-$(TARGET): $(SRCS)
-	@mkdir -p $(dir $(TARGET))
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $^ $(LIBS)
+all: $(BUILD)/discrub
+
+$(BUILD)/discrub: $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+
+$(BUILD)/%.o: src/%.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD):
+	@mkdir -p $@
+
+format:
+	./format.sh
+
+.PHONY: clean
 
 clean:
-	rm -rf $(dir $(TARGET))
-
-.PHONY: all clean
+	rm -rf $(BUILD)
