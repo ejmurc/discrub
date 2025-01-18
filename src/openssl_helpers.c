@@ -1,6 +1,6 @@
 #include "openssl_helpers.h"
 
-SSL_CTX* CreateSSL_CTX() {
+SSL_CTX* create_ssl_ctx() {
   SSL_load_error_strings();
   SSL_library_init();
   OpenSSL_add_all_algorithms();
@@ -16,7 +16,7 @@ SSL_CTX* CreateSSL_CTX() {
   return ctx;
 }
 
-BIO* CreateBIO(SSL_CTX* ctx, const char* hostname) {
+BIO* create_bio(SSL_CTX* ctx, const char* hostname) {
   if (ctx == NULL || hostname == NULL) {
     return NULL;
   }

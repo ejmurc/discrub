@@ -9,11 +9,11 @@
 #define WINDOW_HEIGHT 500
 
 int main() {
-  SSL_CTX* ctx = CreateSSL_CTX();
+  SSL_CTX* ctx = create_ssl_ctx();
   if (ctx == NULL) {
     goto cleanup_none;
   }
-  BIO* bio = CreateBIO(ctx, "discord.com:443");
+  BIO* bio = create_bio(ctx, "discord.com:443");
   if (!bio) {
     goto cleanup_ctx;
   }

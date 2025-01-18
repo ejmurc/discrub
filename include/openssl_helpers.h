@@ -6,8 +6,8 @@
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
-SSL_CTX* CreateSSL_CTX();
+SSL_CTX* create_ssl_ctx();
 
-BIO* CreateBIO(SSL_CTX* ctx, const char* hostname);
+BIO* create_bio(SSL_CTX* ctx, const char* hostname);
 
 #endif
