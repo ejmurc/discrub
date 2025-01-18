@@ -2,6 +2,7 @@ CC ?= gcc
 CFLAGS = -std=c89 -Ofast -Wall -Wextra -Iinclude/
 BUILD = build
 SRCS = $(wildcard src/*.c)
+HEADERS = $(wildcard include/*.h)
 OBJS = $(SRCS:src/%.c=$(BUILD)/%.o)
 LIBS = $(shell pkg-config sdl3 sdl3-ttf openssl --libs)
 INCLUDES = $(shell pkg-config openssl sdl3 sdl3-ttf --cflags)
@@ -15,7 +16,7 @@ CLEAR_LINE = \033[2K\r
 
 .PHONY: all dev format clean
 
-all: $(BUILD)/discrub
+prod: $(BUILD)/discrub
 	@printf "$(COLOR_GREEN)Build completed successfully.$(COLOR_RESET)\n"
 
 dev: CFLAGS := -std=c89 -Wall -Wextra -Iinclude/ -g -fsanitize=address
