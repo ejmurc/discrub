@@ -23,20 +23,20 @@ dev: $(BUILD)/discrub
 	@printf "$(COLOR_YELLOW)Development build completed successfully.$(COLOR_RESET)\n"
 
 $(BUILD)/discrub: $(OBJS)
-	@printf "$(CLEAR_LINE)$(COLOR_BLUE)Linking executable...$(COLOR_RESET)"
+	@printf "$(CLEAR_LINE)$(COLOR_BLUE)Linking executable...$(COLOR_RESET)\r"
 	@if $(CC) $(CFLAGS) -o $@ $^ $(LIBS); then \
-		printf "$(CLEAR_LINE)$(COLOR_GREEN)Linking completed successfully.$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_GREEN)Linked executable$(COLOR_RESET)\r"; \
 	else \
-		printf "$(CLEAR_LINE)$(COLOR_RED)Linking failed!$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_RED)Linking failed$(COLOR_RESET)\n"; \
 		exit 1; \
 	fi
 
 $(BUILD)/%.o: src/%.c | $(BUILD)
-	@printf "$(CLEAR_LINE)$(COLOR_BLUE)Compiling $<...$(COLOR_RESET)"
+	@printf "$(CLEAR_LINE)$(COLOR_BLUE)Compiling $<...$(COLOR_RESET)\r"
 	@if $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@; then \
-		printf "$(CLEAR_LINE)$(COLOR_GREEN)Compiled $< successfully.$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_GREEN)Compiled $<$(COLOR_RESET)\r"; \
 	else \
-		printf "$(CLEAR_LINE)$(COLOR_RED)Compilation of $< failed!$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_RED)Compilation failed$<$(COLOR_RESET)\n"; \
 		exit 1; \
 	fi
 
@@ -47,20 +47,28 @@ $(BUILD):
 	fi
 
 format:
-	@printf "$(CLEAR_LINE)$(COLOR_GREEN)Running code formatter...$(COLOR_RESET)"
-	@if ./format.sh; then \
-		printf "$(CLEAR_LINE)$(COLOR_GREEN)Code formatting completed successfully.$(COLOR_RESET)\n"; \
-	else \
-		printf "$(CLEAR_LINE)$(COLOR_RED)Code formatting failed!$(COLOR_RESET)\n"; \
+	@printf "$(COLOR_BLUE)Checking for clang-format...$(COLOR_RESET)\r"
+	@if ! command -v clang-format &> /dev/null; then \
+		printf "$(CLEAR_LINE)$(COLOR_RED)clang-format could not be found. Exiting...$(COLOR_RESET)\n"; \
 		exit 1; \
 	fi
+	@printf "$(CLEAR_LINE)$(COLOR_YELLOW)Formatting source and header files...$(COLOR_RESET)\n"
+	@for file in $(SRCS) $(HEADERS); do \
+		printf "$(CLEAR_LINE)$(COLOR_BLUE)Formatting $$file...$(COLOR_RESET)\r"; \
+		if ! clang-format -i $$file; then \
+			printf "$(CLEAR_LINE)$(COLOR_RED)Failed to format: $$file. Exiting...$(COLOR_RESET)\n"; \
+			exit 1; \
+		fi; \
+		printf "$(CLEAR_LINE)$(COLOR_GREEN)Formatted $$file$(COLOR_RESET)\r"; \
+	done
+	@printf "$(CLEAR_LINE)$(COLOR_GREEN)Formatted source and header files$(COLOR_RESET)\n"
 
 clean:
-	@printf "$(CLEAR_LINE)$(COLOR_RED)Cleaning build directory...$(COLOR_RESET)"
+	@printf "$(CLEAR_LINE)$(COLOR_RED)Cleaning build directory...$(COLOR_RESET)\r"
 	@if rm -rf $(BUILD); then \
-		printf "$(CLEAR_LINE)$(COLOR_RED)Clean completed successfully.$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_RED)Cleaned build directory$(COLOR_RESET)\r"; \
 	else \
-		printf "$(CLEAR_LINE)$(COLOR_RED)Clean failed!$(COLOR_RESET)\n"; \
+		printf "$(CLEAR_LINE)$(COLOR_RED)Failed to clean build directory$(COLOR_RESET)\n"; \
 		exit 1; \
 	fi
 	@printf "\n"
