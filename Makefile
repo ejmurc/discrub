@@ -19,7 +19,7 @@ CLEAR_LINE = \033[2K\r
 prod: $(BUILD)/discrub
 	@printf "$(COLOR_GREEN)Build completed successfully.$(COLOR_RESET)\n"
 
-dev: CFLAGS := -std=c89 -Wall -Wextra -Iinclude/ -g -fsanitize=address
+dev: CFLAGS = -std=c89 -Wall -Wextra -Iinclude/ -g
 dev: $(BUILD)/discrub
 	@printf "$(COLOR_YELLOW)Development build completed successfully.$(COLOR_RESET)\n"
 
