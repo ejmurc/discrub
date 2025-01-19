@@ -1,12 +1,13 @@
-#include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h>
+/*#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>*/
 #include <openssl/ssl.h>
 #include <stdio.h>
 
+#include "discrub_client.h"
 #include "openssl_helpers.h"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 500
+/*#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 500*/
 
 int main() {
   SSL_CTX* ctx = create_ssl_ctx();
@@ -14,11 +15,15 @@ int main() {
     goto cleanup_none;
   }
   BIO* bio = create_bio(ctx, "discord.com:443");
-  if (!bio) {
+  if (bio == NULL) {
     goto cleanup_ctx;
   }
   printf("Connected to discord.com successfully.\n");
-  if (!SDL_Init(SDL_INIT_VIDEO) || !TTF_Init()) {
+  const char* username = "foo";
+  const char* password = "bar";
+  discrub_login(bio, username, password);
+
+  /*if (!SDL_Init(SDL_INIT_VIDEO) || !TTF_Init()) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                  "Couldn't initialize SDL or SDL_ttf: %s", SDL_GetError());
     goto cleanup_bio;
@@ -42,8 +47,8 @@ int main() {
   }
   TTF_Quit();
   SDL_DestroyWindow(window);
-  SDL_Quit();
-cleanup_bio:
+  SDL_Quit();*/
+  /*cleanup_bio:*/
   BIO_free_all(bio);
 cleanup_ctx:
   SSL_CTX_free(ctx);
