@@ -5,6 +5,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
+#include <stdint.h>
 
 struct Header {
   char* key;
@@ -13,8 +14,10 @@ struct Header {
 };
 
 struct HTTPResponse {
-  char* content;
+  char* raw;
+  char* body;
   struct Header* headers;
+  uint16_t code;
 };
 
 SSL_CTX* create_ssl_ctx();
