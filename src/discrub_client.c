@@ -40,6 +40,7 @@ struct LoginResponse* discrub_login(BIO* bio, const char* username,
            password);
   printf("%s\n", request_string);
   struct HTTPResponse* response = perform_http_request(bio, request_string);
+  free(request_string);
   printf("Response code: %hu\n", response->code);
   printf("Headers:\n");
   struct Header* header = response->headers;
