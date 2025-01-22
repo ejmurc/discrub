@@ -32,15 +32,18 @@ struct LoginResponse* discrub_login(BIO* bio, const char* username,
   size_t request_size =
       snprintf(NULL, 0, request_fmt, json_size, username, password) + 1;
   char* request_string = malloc(request_size);
-  if (!request_string) {
-    fprintf(stderr, "discrub_login: ENOMEM\n");
+  if (request_string == NULL) {
+    fprintf(stderr,
+            "discrub_login: Memory allocation error with request_string\n");
     return NULL;
   }
   snprintf(request_string, request_size, request_fmt, json_size, username,
            password);
-  printf("%s\n", request_string);
   struct HTTPResponse* response = perform_http_request(bio, request_string);
   free(request_string);
+  if (response == NULL) {
+    return NULL;
+  }
   printf("Response code: %hu\n", response->code);
   printf("Headers:\n");
   struct Header* header = response->headers;
@@ -49,6 +52,11 @@ struct LoginResponse* discrub_login(BIO* bio, const char* username,
     header = header->next;
   }
   printf("Body: %s\n", response->body);
+  if (response->code != 200) {
+    fprintf(stderr, "discrub_login: Response code was %hu\n", response->code);
+    free_http_response(response);
+    return NULL;
+  }
   free_http_response(response);
   return NULL;
 }

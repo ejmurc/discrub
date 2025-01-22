@@ -15,6 +15,10 @@ static char* trim_whitespace(char* str) {
   return str;
 }
 
+static void string_tolower(char *p) {
+  for (;*p;p++)*p=tolower(*p);
+}
+
 SSL_CTX* create_ssl_ctx() {
   SSL_load_error_strings();
   SSL_library_init();
@@ -112,6 +116,7 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
       return NULL;
     }
   }
+  printf("%s\n", raw);
   struct HTTPResponse* response = malloc(sizeof(struct HTTPResponse));
   if (response == NULL) {
     perror("Failed to allocate memory for HTTPResponse");
@@ -165,6 +170,7 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
   }
   uint16_t response_code = value;
   char* header_line = next_line;
+  unsigned char chunked = 0;
   while (header_line && *header_line != '\0') {
     next_line = strstr(header_line, "\r\n");
     if (next_line) {
@@ -189,9 +195,10 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
       free_http_response(response);
       break;
     }
+    string_tolower(key);
     struct Header* header = malloc(sizeof(struct Header));
     if (header == NULL) {
-      perror("Memory allocation failed");
+      perror("Failed to allocate memory for Header");
       free_http_response(response);
       return NULL;
     }
@@ -206,9 +213,15 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
     }
     header->key = key;
     header->value = value;
+    if (chunked == 0 && strcmp(key, "transfer-encoding") == 0 && strcmp(value, "chunked") == 0) {
+      chunked = 1;
+    }
     header_line = next_line;
   }
   char* body = headers_end + 4;
+  if (strlen(body) > 0 && chunked == 1) {
+    /* Parse body as chunked response */
+  }
   response->body = body;
   response->raw = raw;
   response->code = response_code;

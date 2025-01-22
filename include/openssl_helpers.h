@@ -1,6 +1,7 @@
 #ifndef OPENSSL_HELPERS_H
 #define OPENSSL_HELPERS_H
 
+#include <ctype.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
