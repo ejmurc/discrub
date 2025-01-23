@@ -4,19 +4,24 @@
 
 static char* trim_whitespace(char* str) {
   char* end;
-  while (*str == ' ')
+  while (*str == ' ') {
     str++;
-  if (*str == 0)
+  }
+  if (*str == 0) {
     return str;
+  }
   end = str + strlen(str) - 1;
-  while (end > str && *end == ' ')
+  while (end > str && *end == ' ') {
     end--;
+  }
   end[1] = '\0';
   return str;
 }
 
-static void string_tolower(char *p) {
-  for (;*p;p++)*p=tolower(*p);
+static void string_tolower(char* p) {
+  for (; *p; p++) {
+    *p = tolower(*p);
+  }
 }
 
 SSL_CTX* create_ssl_ctx() {
@@ -213,14 +218,30 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
     }
     header->key = key;
     header->value = value;
-    if (chunked == 0 && strcmp(key, "transfer-encoding") == 0 && strcmp(value, "chunked") == 0) {
+    if (chunked == 0 && strcmp(key, "transfer-encoding") == 0 &&
+        strcmp(value, "chunked") == 0) {
       chunked = 1;
     }
     header_line = next_line;
   }
   char* body = headers_end + 4;
   if (strlen(body) > 0 && chunked == 1) {
-    /* Parse body as chunked response */
+    char* read_ptr = body;
+    char* write_ptr = body;
+    for (;;) {
+      char* chunk_size_end = strstr(body, "\r\n");
+      if (chunk_size_end == NULL)
+        break;
+      *chunk_size_end = '\0';
+      size_t chunk_size = strtol(read_ptr, NULL, 16);
+      if (chunk_size == 0)
+        break;
+      read_ptr = chunk_size_end + 2;
+      memmove(write_ptr, read_ptr, chunk_size);
+      write_ptr += chunk_size;
+      read_ptr += chunk_size + 2;
+    }
+    *write_ptr = '\0';
   }
   response->body = body;
   response->raw = raw;
