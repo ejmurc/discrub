@@ -44,14 +44,6 @@ struct LoginResponse* discrub_login(BIO* bio, const char* username,
   if (response == NULL) {
     return NULL;
   }
-  printf("Response code: %hu\n", response->code);
-  printf("Headers:\n");
-  struct Header* header = response->headers;
-  while (header) {
-    printf("['%s' '%s']\n", header->key, header->value);
-    header = header->next;
-  }
-  printf("Body: %s\n", response->body);
   if (response->code != 200) {
     fprintf(stderr, "discrub_login: Response code was %hu\n", response->code);
     free_http_response(response);

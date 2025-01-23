@@ -121,7 +121,6 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
       return NULL;
     }
   }
-  printf("%s\n", raw);
   struct HTTPResponse* response = malloc(sizeof(struct HTTPResponse));
   if (response == NULL) {
     perror("Failed to allocate memory for HTTPResponse");
