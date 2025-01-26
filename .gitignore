@@ -1,6 +1,3 @@
-# Secrets
-.cache/
-
 # Build
 build/
 config.json
