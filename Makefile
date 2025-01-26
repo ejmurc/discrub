@@ -1,7 +1,7 @@
 CC ?= gcc
 CFLAGS = -std=c89 -Ofast -Wall -Wextra -Iinclude/
-INCLUDES = $(shell pkg-config sdl3 sdl3-ttf openssl --cflags)
-LIBS = $(shell pkg-config sdl3 sdl3-ttf openssl --libs)
+INCLUDES = $(shell pkg-config openssl --cflags)
+LIBS = $(shell pkg-config openssl --libs)
 BUILD = build
 SRCS = $(wildcard src/*.c)
 HEADERS = $(wildcard include/*.h)
