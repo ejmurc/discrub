@@ -1,13 +1,11 @@
-/*#include <SDL3/SDL.h>
-#include <SDL3_ttf/SDL_ttf.h>*/
 #include <openssl/ssl.h>
 #include <stdio.h>
 
 #include "discrub_client.h"
 #include "openssl_helpers.h"
+#include "setup.h"
 
-/*#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 500*/
+#define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
 
 int main() {
   SSL_CTX* ctx = create_ssl_ctx();
@@ -18,40 +16,32 @@ int main() {
   if (bio == NULL) {
     goto cleanup_ctx;
   }
-  printf("Connected to discord.com successfully.\n");
-  const char* username = "foo";
-  const char* password = "bar";
-  discrub_login(bio, username, password);
-
-  /*if (!SDL_Init(SDL_INIT_VIDEO) || !TTF_Init()) {
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                 "Couldn't initialize SDL or SDL_ttf: %s", SDL_GetError());
-    goto cleanup_bio;
-  }
-  SDL_Window* window = SDL_CreateWindow("Discrub", WINDOW_WIDTH, WINDOW_HEIGHT,
-                                        SDL_WINDOW_HIGH_PIXEL_DENSITY);
-  SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
-  unsigned int running = 1;
-  SDL_Event event;
-  while (running) {
-    while (SDL_PollEvent(&event)) {
-      switch (event.type) {
-        case SDL_EVENT_QUIT:
-          running = 0;
-          break;
-      }
+  char *uid = NULL, *token = NULL;
+  if (load_cache(CREDENTIALS_FILEPATH, &uid, &token)) {
+    char *email = NULL, *password = NULL;
+    if (prompt_credentials(&email, &password)) {
+      goto cleanup_bio;
     }
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
+    struct LoginResponse* response = discrub_login(bio, email, password);
+    free(password);
+    if (response == NULL) {
+      fprintf(stderr, "Failed to get response from discrub_login.\n");
+      goto cleanup_bio;
+    }
+    uid = response->uid;
+    token = response->token;
+    if (save_cache(CREDENTIALS_FILEPATH, uid, token)) {
+      goto cleanup_bio;
+    }
+    free(response);
   }
-  TTF_Quit();
-  SDL_DestroyWindow(window);
-  SDL_Quit();*/
-  /*cleanup_bio:*/
+  printf("%s %s\n", uid, token);
+
+cleanup_bio:
   BIO_free_all(bio);
 cleanup_ctx:
   SSL_CTX_free(ctx);
 cleanup_none:
   EVP_cleanup();
+  ERR_free_strings();
 }

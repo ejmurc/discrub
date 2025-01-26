@@ -10,7 +10,7 @@ struct LoginResponse {
   char* uid;
 };
 
-struct LoginResponse* discrub_login(BIO* bio, const char* username,
+struct LoginResponse* discrub_login(BIO* bio, const char* email,
                                     const char* password);
 
 #endif
