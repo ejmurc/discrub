@@ -32,6 +32,8 @@ int main() {
     uid = response->uid;
     token = response->token;
     if (save_cache(CREDENTIALS_FILEPATH, uid, token)) {
+      fprintf(stderr, "Failed to save credentials to filepath %s\n",
+              CREDENTIALS_FILEPATH);
       goto cleanup;
     }
     free(response);

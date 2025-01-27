@@ -1,7 +1,5 @@
 #include "setup.h"
 
-#define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
-
 static int mkdir_p(char* path) {
   path = strdup(path);
   char* p = path;
