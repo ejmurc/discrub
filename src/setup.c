@@ -7,8 +7,6 @@ static int mkdir_p(char* path) {
   char* p = path;
   while ((p = strchr(p + 1, '/'))) {
     *p = '\0';
-    printf("%s\n", p);
-    printf("%s\n", path);
     if (mkdir(path, 0755) == -1 && errno != EEXIST) {
       perror("mkdir");
       return 1;
@@ -46,15 +44,16 @@ static char* get_password() {
   size_t i = 0;
   char* password = malloc(1);
   int ch;
-  if (password == NULL)
+  if (password == NULL) {
     return NULL;
+  }
 #ifdef _WIN32
   while ((ch = _getch()) != '\r') {
     if (ch == 8 && index > 0) {
       printf("\b \b");
       i--;
     } else if (ch != 8) {
-      password[i++] = (char)ch;
+      password[i++] = ch;
       printf("*");
       password = realloc(password, i + 1);
       if (password == NULL)
@@ -68,10 +67,11 @@ static char* get_password() {
   newt.c_lflag &= ~ECHO;
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
   while ((ch = getchar()) != '\n') {
-    password[i++] = (char)ch;
+    password[i++] = ch;
     password = realloc(password, i + 1);
-    if (password == NULL)
+    if (password == NULL) {
       return NULL;
+    }
   }
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 #endif
@@ -83,8 +83,9 @@ static char* get_password() {
 int load_cache(char* filepath, char** uid, char** token) {
   if (filepath[0] == '~') {
     char* home = getenv("HOME");
-    if (home == NULL)
+    if (home == NULL) {
       home = getenv("USERPROFILE");
+    }
     if (home == NULL) {
       return 1;
     }
