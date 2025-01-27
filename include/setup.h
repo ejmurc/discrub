@@ -11,6 +11,8 @@
 #include <unistd.h>
 #endif
 
+char* read_file(const char* filepath);
+
 int load_cache(char* filepath, char** uid, char** token);
 
 int save_cache(char* filepath, const char* uid, const char* token);

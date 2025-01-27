@@ -1,5 +1,47 @@
 #include "discrub_client.h"
 
+static void add_param(char** params, const char* key, const char* value) {
+  if (params == NULL || key == NULL || value == NULL) {
+    return;
+  }
+  size_t length = strlen(*params) + strlen(key) + strlen(value) + 2;
+  char* new_params = realloc(*params, length);
+  if (new_params == NULL) {
+    return;
+  }
+  strcat(new_params, key);
+  strcat(new_params, "=");
+  strcat(new_params, value);
+  strcat(new_params, "&");
+  new_params[length] = '\0';
+  *params = new_params;
+}
+
+static char* get_params(const struct SearchOptions* options) {
+  if (options == NULL) {
+    return NULL;
+  }
+  char* params = malloc(1);
+  params[0] = '\0';
+  add_param(&params, "author_id", options->author_id);
+  add_param(&params, "channel_id", options->channel_id);
+  add_param(&params, "content", options->content);
+  add_param(&params, "mentions", options->mentions);
+  add_param(&params, "include_nsfw", options->include_nsfw ? "true" : "false");
+  add_param(&params, "pinned", options->pinned ? "true" : "false");
+  if (options->offset) {
+    char uint_str[12];
+    snprintf(uint_str, sizeof(uint_str), "%lu", options->offset);
+    add_param(&params, "offset", uint_str);
+  }
+  if (strlen(params) == 1) {
+    free(params);
+    return NULL;
+  }
+  params[strlen(params) - 1] = '\0';
+  return params;
+}
+
 struct LoginResponse* discrub_login(BIO* bio, const char* email,
                                     const char* password) {
   if (bio == NULL || email == NULL || password == NULL) {
@@ -95,4 +137,62 @@ struct LoginResponse* discrub_login(BIO* bio, const char* email,
   login_response->uid = uid;
   login_response->token = token;
   return login_response;
+}
+
+struct SearchResponse* discrub_search(BIO* bio, struct SearchOptions* options) {
+  char* params = get_params(options);
+  printf("%s\n", params);
+  return (struct SearchResponse*)bio;
+}
+
+struct SearchOptions* options_from_json(const char* json_string) {
+  struct JsonToken* options_object = NULL;
+  if (json_string == NULL) {
+    return NULL;
+  }
+  struct SearchOptions* options = malloc(sizeof(struct SearchOptions));
+  if (options == NULL) {
+    goto cleanup;
+  }
+  enum JsonError err = JSON_ENOERR;
+  options_object = jsontok_parse(json_string, &err);
+  if (options_object == NULL || options_object->type != JSON_OBJECT) {
+    goto cleanup;
+  }
+  struct JsonToken* server_id =
+      jsontok_get(options_object->as_object, "server_id");
+  if (server_id == NULL || server_id->type != JSON_STRING) {
+    goto cleanup;
+  }
+  struct JsonToken* channel_id =
+      jsontok_get(options_object->as_object, "channel_id");
+  if (channel_id == NULL || channel_id->type != JSON_STRING) {
+    goto cleanup;
+  }
+  options->server_id = strdup(server_id->as_string);
+  options->channel_id = strdup(channel_id->as_string);
+  struct JsonToken* include_nsfw =
+      jsontok_get(options_object->as_object, "include_nsfw");
+  if (include_nsfw && include_nsfw->type == JSON_BOOLEAN) {
+    options->include_nsfw = include_nsfw->as_boolean;
+  }
+  struct JsonToken* content = jsontok_get(options_object->as_object, "content");
+  if (content && content->type == JSON_STRING) {
+    options->content = strdup(content->as_string);
+  }
+  struct JsonToken* mentions =
+      jsontok_get(options_object->as_object, "mentions");
+  if (mentions && mentions->type == JSON_STRING) {
+    options->mentions = strdup(mentions->as_string);
+  }
+  struct JsonToken* pinned = jsontok_get(options_object->as_object, "pinned");
+  if (pinned && pinned->type == JSON_BOOLEAN) {
+    options->pinned = pinned->as_boolean;
+  }
+  jsontok_free(options_object);
+  return options;
+cleanup:
+  free(options);
+  jsontok_free(options_object);
+  return NULL;
 }

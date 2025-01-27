@@ -15,7 +15,7 @@ static int mkdir_p(char* path) {
   return 0;
 }
 
-static char* read_file(const char* filepath) {
+char* read_file(const char* filepath) {
   FILE* file = fopen(filepath, "rb");
   if (file == NULL) {
     return NULL;

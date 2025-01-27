@@ -7,6 +7,29 @@
 #include "setup.h"
 
 #define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
+#define OPTIONS_HELP_MESSAGE                                                   \
+  "Usage: The program requires a valid 'options.json' file to run.\n"          \
+  "Please ensure that the file exists and contains the necessary "             \
+  "configuration.\n"                                                           \
+  "The configuration should include the following required options:\n"         \
+  "  - server_id<string>: The ID of the server to search within.\n"            \
+  "  - channel_id<string>: The ID of the channel to search within.\n"          \
+  "With the following non-required options:\n"                                 \
+  "  - include_nsfw<boolean>: A boolean flag to include or exclude NSFW "      \
+  "content.\n"                                                                 \
+  "  - content<string>: A string to search for within the message content.\n"  \
+  "  - mentions<string>: A string to filter messages that mention a specific " \
+  "user or role.\n"                                                            \
+  "  - pinned<boolean>: A boolean flag to filter only pinned messages.\n"      \
+  "Example 'options.json':\n"                                                  \
+  "{\n"                                                                        \
+  "  \"server_id\": \"123456789012345678\",\n"                                 \
+  "  \"channel_id\": \"987654321098765432\",\n"                                \
+  "  \"include_nsfw\": false,\n"                                               \
+  "  \"content\": \"search keyword\",\n"                                       \
+  "  \"mentions\": \"username.asdf\",\n"                                       \
+  "  \"pinned\": true\n"                                                       \
+  "}\n"
 
 int main() {
   BIO* bio = NULL;
@@ -45,6 +68,19 @@ int main() {
     free(response);
   }
   printf_verbose("User <%s> successfully authenticated.", uid);
+
+  char* options_string = read_file("options.json");
+  if (options_string == NULL) {
+    printf_verbose(OPTIONS_HELP_MESSAGE);
+    goto cleanup;
+  }
+  struct SearchOptions* options = options_from_json(options_string);
+  if (options == NULL) {
+    printf(OPTIONS_HELP_MESSAGE);
+    goto cleanup;
+  }
+  options->author_id = uid;
+  struct SearchResponse* response = discrub_search(bio, options);
 
 cleanup:
   BIO_free_all(bio);
