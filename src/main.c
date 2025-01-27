@@ -8,40 +8,39 @@
 #define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
 
 int main() {
+  BIO* bio = NULL;
   SSL_CTX* ctx = create_ssl_ctx();
   if (ctx == NULL) {
-    goto cleanup_none;
+    goto cleanup;
   }
-  BIO* bio = create_bio(ctx, "discord.com:443");
+  bio = create_bio(ctx, "discord.com:443");
   if (bio == NULL) {
-    goto cleanup_ctx;
+    goto cleanup;
   }
   char *uid = NULL, *token = NULL;
   if (load_cache(CREDENTIALS_FILEPATH, &uid, &token)) {
     char *email = NULL, *password = NULL;
     if (prompt_credentials(&email, &password)) {
-      goto cleanup_bio;
+      goto cleanup;
     }
     struct LoginResponse* response = discrub_login(bio, email, password);
     free(password);
     if (response == NULL) {
       fprintf(stderr, "Failed to get response from discrub_login.\n");
-      goto cleanup_bio;
+      goto cleanup;
     }
     uid = response->uid;
     token = response->token;
     if (save_cache(CREDENTIALS_FILEPATH, uid, token)) {
-      goto cleanup_bio;
+      goto cleanup;
     }
     free(response);
   }
   printf("%s %s\n", uid, token);
 
-cleanup_bio:
+cleanup:
   BIO_free_all(bio);
-cleanup_ctx:
   SSL_CTX_free(ctx);
-cleanup_none:
   EVP_cleanup();
   ERR_free_strings();
 }
