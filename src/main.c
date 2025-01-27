@@ -4,6 +4,7 @@
 #include "discrub_client.h"
 #include "openssl_helpers.h"
 #include "setup.h"
+#include "logging.h"
 
 #define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
 
@@ -18,27 +19,29 @@ int main() {
     goto cleanup;
   }
   char *uid = NULL, *token = NULL;
+  printf_verbose("Checking cache for authentication credentials at '%s'...", CREDENTIALS_FILEPATH);
   if (load_cache(CREDENTIALS_FILEPATH, &uid, &token)) {
+    printf_verbose("Could not find authentication credentials in cache.");
     char *email = NULL, *password = NULL;
     if (prompt_credentials(&email, &password)) {
+      printf_verbose("Failed to retrieve email or password from user prompt.");
       goto cleanup;
     }
     struct LoginResponse* response = discrub_login(bio, email, password);
     free(password);
     if (response == NULL) {
-      fprintf(stderr, "Failed to get response from discrub_login.\n");
+      printf_verbose("Authentication failed: No response received from 'discrub_login'.");
       goto cleanup;
     }
     uid = response->uid;
     token = response->token;
     if (save_cache(CREDENTIALS_FILEPATH, uid, token)) {
-      fprintf(stderr, "Failed to save credentials to filepath %s\n",
-              CREDENTIALS_FILEPATH);
+      printf_verbose("Failed to save authentication credentials to '%s'.", CREDENTIALS_FILEPATH);
       goto cleanup;
     }
     free(response);
   }
-  printf("%s %s\n", uid, token);
+  printf_verbose("User <%s> successfully authenticated.", uid);
 
 cleanup:
   BIO_free_all(bio);
