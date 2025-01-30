@@ -84,27 +84,44 @@ int main() {
   }
   options->author_id = uid;
   struct SearchResponse* response = discrub_search(bio, token, options);
+  size_t total_messages = response->total_messages;
   printf_verbose("Total messages in query: %zu\n", response->total_messages);
-  printf_verbose("Messages retrieved: %zu\n", response->length);
-  size_t i = 0;
-  for (; i < response->length; i++) {
-    struct DiscordMessage* message = response->messages[i];
-    printf_verbose(
-        "Deleting message { id: \"%s\", author: \"%s\", content: \"%.40s\", "
-        "timestamp: \"%s\" }\n",
-        message->id, message->author_username, message->content,
-        message->timestamp ? message->timestamp : "unknown");
-    double retry =
-        discrub_delete_message(bio, token, options->channel_id, message->id);
-    if (retry == -1) {
-      printf("Breaking from loop\n");
-      break;
-    } else if (retry == 0) {
-      sleep_ms(1000);
-    } else {
-      printf_verbose("Rate limited. Retrying in %dms.\n", retry * 1000);
-      sleep_ms(retry * 1000);
+  while (total_messages > 0) {
+    printf_verbose("Messages retrieved: %zu\n", response->length);
+    size_t i = 0;
+    for (; i < response->length; i++) {
+      struct DiscordMessage* message = response->messages[i];
+      printf_verbose(
+          "Deleting message { id: \"%s\", author: \"%s\", content: \"%.40s\", "
+          "timestamp: \"%s\" }\n",
+          message->id, message->author_username, message->content,
+          message->timestamp ? message->timestamp : "unknown");
+      double retry =
+          discrub_delete_message(bio, token, options->channel_id, message->id);
+      if (retry == -1) {
+        printf("Breaking from loop\n");
+        break;
+      } else if (retry == 0) {
+        total_messages--;
+        sleep_ms(1000);
+      } else {
+        printf_verbose("Rate limited. Retrying in %dms.\n", retry * 1000);
+        sleep_ms(retry * 1000);
+      }
     }
+    if (total_messages > 25) {
+      options->offset = total_messages - 25;
+    } else {
+      options->offset = 0;
+    }
+    discrub_search_response_free(response);
+    response = discrub_search(bio, token, options);
+    if (response == NULL) {
+      printf_verbose(
+          "Failed to fetch the next batch of messages. Exiting loop.\n");
+      break;
+    }
+    total_messages = response->total_messages;
   }
   discrub_search_response_free(response);
 
