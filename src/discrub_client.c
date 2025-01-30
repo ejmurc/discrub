@@ -176,31 +176,6 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     free_http_response(response);
     return NULL;
   }
-  struct JsonToken* total_results =
-      jsontok_get(body_json->as_object, "total_results");
-  if (total_results == NULL) {
-    fprintf(stderr, "total_results is null in response JSON\n%s\n",
-            response->body);
-    free(search_response);
-    free_http_response(response);
-    return NULL;
-  }
-  search_response->length = total_results->as_number;
-  if (total_results->as_number == 0) {
-    jsontok_free(body_json);
-    free(search_response);
-    free_http_response(response);
-    return search_response;
-  }
-  search_response->messages =
-      malloc(total_results->as_number * sizeof(struct DiscordMessage*));
-  if (search_response->messages == NULL) {
-    fprintf(stderr,
-            "Failed to allocate memory for search_response->messages\n");
-    jsontok_free(body_json);
-    free(search_response);
-    free_http_response(response);
-  }
   struct JsonToken* messages_wrapped =
       jsontok_get(body_json->as_object, "messages");
   if (messages_wrapped == NULL) {
@@ -218,7 +193,17 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     return NULL;
   }
   struct JsonToken* messages = jsontok_parse(messages_wrapped->as_string, &err);
-
+  search_response->length = messages->as_array->length;
+  search_response->messages =
+      malloc(search_response->length * sizeof(struct DiscordMessage*));
+  if (search_response->messages == NULL) {
+    fprintf(stderr,
+            "Failed to allocate memory for search_response->messages\n");
+    jsontok_free(body_json);
+    jsontok_free(messages);
+    free(search_response);
+    free_http_response(response);
+  }
   size_t i;
   for (i = 0; i < messages->as_array->length; i++) {
     struct JsonToken* message_container =
@@ -307,14 +292,12 @@ void discrub_search_response_free(struct SearchResponse* search_response) {
   size_t i;
   for (i = 0; i < search_response->length; i++) {
     struct DiscordMessage* message = search_response->messages[i];
-    if (message) {
-      free(message->author_id);
-      free(message->author_username);
-      free(message->content);
-      free(message->id);
-      free(message->timestamp);
-      free(message);
-    }
+    free(message->author_id);
+    free(message->author_username);
+    free(message->content);
+    free(message->id);
+    free(message->timestamp);
+    free(message);
   }
   free(search_response->messages);
   free(search_response);

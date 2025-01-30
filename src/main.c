@@ -84,9 +84,7 @@ int main() {
   size_t i = 0;
   for (; i < response->length; i++) {
     struct DiscordMessage* message = response->messages[i];
-    if (message) {
-      printf("Deleting message <%s>...\n", message->id);
-    }
+    printf("Deleting message <%s>...\n", message->id);
   }
   discrub_search_response_free(response);
 
