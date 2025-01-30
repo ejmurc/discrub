@@ -10,5 +10,4 @@ void printf_verbose(const char* format, ...) {
   va_start(args, format);
   vprintf(format, args);
   va_end(args);
-  printf("\n");
 }
