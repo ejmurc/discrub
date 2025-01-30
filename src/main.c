@@ -5,6 +5,7 @@
 #include "logging.h"
 #include "openssl_helpers.h"
 #include "setup.h"
+#include "sleep.h"
 
 #define CREDENTIALS_FILEPATH "~/.cache/discrub/credentials"
 #define OPTIONS_HELP_MESSAGE                                                   \
@@ -48,14 +49,16 @@ int main() {
     printf_verbose("Could not find authentication credentials in cache.\n");
     char *email = NULL, *password = NULL;
     if (prompt_credentials(&email, &password)) {
-      printf_verbose("Failed to retrieve email or password from user prompt.\n");
+      printf_verbose(
+          "Failed to retrieve email or password from user prompt.\n");
       goto cleanup;
     }
     struct LoginResponse* response = discrub_login(bio, email, password);
     free(password);
     if (response == NULL) {
       printf_verbose(
-          "Authentication failed: No response received from 'discrub_login'.\n");
+          "Authentication failed: No response received from "
+          "'discrub_login'.\n");
       goto cleanup;
     }
     uid = response->uid;
@@ -82,10 +85,26 @@ int main() {
   options->author_id = uid;
   struct SearchResponse* response = discrub_search(bio, token, options);
   printf_verbose("Total messages in query: %zu\n", response->total_messages);
+  printf_verbose("Messages retrieved: %zu\n", response->length);
   size_t i = 0;
   for (; i < response->length; i++) {
     struct DiscordMessage* message = response->messages[i];
-    printf_verbose("Deleting message <%s>\n", message->id);
+    printf_verbose(
+        "Deleting message { id: \"%s\", author: \"%s\", content: \"%.40s\", "
+        "timestamp: \"%s\" }\n",
+        message->id, message->author_username, message->content,
+        message->timestamp ? message->timestamp : "unknown");
+    double retry =
+        discrub_delete_message(bio, token, options->channel_id, message->id);
+    if (retry == -1) {
+      printf("Breaking from loop\n");
+      break;
+    } else if (retry == 0) {
+      sleep_ms(1000);
+    } else {
+      printf_verbose("Rate limited. Retrying in %dms.\n", retry * 1000);
+      sleep_ms(retry * 1000);
+    }
   }
   discrub_search_response_free(response);
 

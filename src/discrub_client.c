@@ -296,6 +296,51 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
   return search_response;
 }
 
+double discrub_delete_message(BIO* bio, const char* token,
+                              const char* channel_id, const char* message_id) {
+  if (bio == NULL || token == NULL || channel_id == NULL ||
+      message_id == NULL) {
+    fprintf(stderr, "discrub_delete_message: Null argument(s)\n");
+    return -1;
+  }
+  const char* request_fmt =
+      "DELETE /api/v9/channels/%s/messages/%s HTTP/1.1\r\n"
+      "Host: discord.com\r\n"
+      "Authorization: %s\r\n"
+      "Connection: close\r\n"
+      "\r\n";
+  size_t request_size =
+      snprintf(NULL, 0, request_fmt, channel_id, message_id, token) + 1;
+  char* request_string = malloc(request_size);
+  snprintf(request_string, request_size, request_fmt, channel_id, message_id,
+           token);
+  struct HTTPResponse* response = perform_http_request(bio, request_string);
+  free(request_string);
+  if (response == NULL) {
+    return -1;
+  }
+  if (response->code != 204) {
+    enum JsonError err = JSON_ENOERR;
+    struct JsonToken* body_json = jsontok_parse(response->body, &err);
+    if (body_json) {
+      struct JsonToken* retry_after =
+          jsontok_get(body_json->as_object, "retry_after");
+      if (retry_after) {
+        free_http_response(response);
+        double retry_after_ms = retry_after->as_number;
+        jsontok_free(body_json);
+        return retry_after_ms;
+      }
+      jsontok_free(body_json);
+    }
+    fprintf(stderr, "discrub_delete_message: Response code was %hu\n",
+            response->code);
+    free_http_response(response);
+    return -1;
+  }
+  return 0;
+}
+
 void discrub_search_response_free(struct SearchResponse* search_response) {
   if (search_response == NULL) {
     return;
