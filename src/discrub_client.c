@@ -106,43 +106,218 @@ struct LoginResponse* discrub_login(BIO* bio, const char* email,
     free_http_response(response);
     return NULL;
   }
-  size_t i;
-  char *uid = NULL, *token = NULL;
-  for (i = 0; i < body_json->as_object->count; i++) {
-    if (uid != NULL && token != NULL) {
-      break;
-    }
-    struct JsonEntry* entry = body_json->as_object->entries[i];
-    if (entry->value->type != JSON_STRING) {
-      continue;
-    }
-    if (uid == NULL && strcmp(entry->key, "user_id") == 0) {
-      uid = strdup(entry->value->as_string);
-    } else if (token == NULL && strcmp(entry->key, "token") == 0) {
-      token = strdup(entry->value->as_string);
-    }
-  }
-  jsontok_free(body_json);
-  if (uid == NULL || token == NULL) {
-    if (uid) {
-      free(uid);
-    }
-    if (token) {
-      free(token);
-    }
+  struct JsonToken* uid = jsontok_get(body_json->as_object, "user_id");
+  struct JsonToken* token = jsontok_get(body_json->as_object, "token");
+  if (uid == NULL || uid->type != JSON_STRING || token == NULL ||
+      token->type != JSON_STRING) {
     free(login_response);
     free_http_response(response);
     return NULL;
   }
-  login_response->uid = uid;
-  login_response->token = token;
+  login_response->uid = strdup(uid->as_string);
+  login_response->token = strdup(token->as_string);
+  jsontok_free(body_json);
   return login_response;
 }
 
-struct SearchResponse* discrub_search(BIO* bio, struct SearchOptions* options) {
+struct SearchResponse* discrub_search(BIO* bio, const char* token,
+                                      struct SearchOptions* options) {
+  if (bio == NULL || token == NULL || options == NULL) {
+    fprintf(stderr, "discrub_search: Null argument(s)\n");
+    return NULL;
+  }
+  if (options->server_id == NULL) {
+    fprintf(stderr, "discrub_search: Options must include server_id\n");
+    return NULL;
+  }
   char* params = get_params(options);
-  printf("%s\n", params);
-  return (struct SearchResponse*)bio;
+  if (params == NULL) {
+    fprintf(stderr, "discrub_search: Failed to get parameters from options\n");
+    return NULL;
+  }
+  const char* request_fmt =
+      "GET /api/v9/guilds/%s/messages/search?%s HTTP/1.1\r\n"
+      "Host: discord.com\r\n"
+      "Authorization: %s\r\n"
+      "Connection: close\r\n"
+      "\r\n";
+  size_t request_size =
+      snprintf(NULL, 0, request_fmt, options->server_id, params, token) + 1;
+  char* request_string = malloc(request_size);
+  snprintf(request_string, request_size, request_fmt, options->server_id,
+           params, token);
+  free(params);
+  struct HTTPResponse* response = perform_http_request(bio, request_string);
+  free(request_string);
+  if (response == NULL) {
+    return NULL;
+  }
+  if (response->code != 200) {
+    fprintf(stderr, "discrub_search: Response code was %hu\n", response->code);
+    free_http_response(response);
+    return NULL;
+  }
+  struct SearchResponse* search_response =
+      malloc(sizeof(struct SearchResponse));
+  if (search_response == NULL) {
+    fprintf(stderr,
+            "discrub_search: Failed to allocate memory for search_response\n");
+    free_http_response(response);
+    return NULL;
+  }
+  search_response->length = 0;
+  search_response->messages = NULL;
+  enum JsonError err = JSON_ENOERR;
+  struct JsonToken* body_json = jsontok_parse(response->body, &err);
+  if (err != JSON_ENOERR) {
+    fprintf(stderr, "Error parsing response JSON (%s): %s\n",
+            jsontok_strerror(err), response->body);
+    free(search_response);
+    free_http_response(response);
+    return NULL;
+  }
+  struct JsonToken* total_results =
+      jsontok_get(body_json->as_object, "total_results");
+  if (total_results == NULL) {
+    fprintf(stderr, "total_results is null in response JSON\n%s\n",
+            response->body);
+    free(search_response);
+    free_http_response(response);
+    return NULL;
+  }
+  search_response->length = total_results->as_number;
+  if (total_results->as_number == 0) {
+    jsontok_free(body_json);
+    free(search_response);
+    free_http_response(response);
+    return search_response;
+  }
+  search_response->messages =
+      malloc(total_results->as_number * sizeof(struct DiscordMessage*));
+  if (search_response->messages == NULL) {
+    fprintf(stderr,
+            "Failed to allocate memory for search_response->messages\n");
+    jsontok_free(body_json);
+    free(search_response);
+    free_http_response(response);
+  }
+  struct JsonToken* messages_wrapped =
+      jsontok_get(body_json->as_object, "messages");
+  if (messages_wrapped == NULL) {
+    fprintf(stderr, "messages_wrapped is null in response JSON\n%s\n",
+            response->body);
+    discrub_search_response_free(search_response);
+    free_http_response(response);
+    return NULL;
+  }
+  if (messages_wrapped->type != JSON_WRAPPED_ARRAY) {
+    fprintf(stderr, "messages is not of type JSON_WRAPPED_ARRAY\n%s\n",
+            response->body);
+    discrub_search_response_free(search_response);
+    free_http_response(response);
+    return NULL;
+  }
+  struct JsonToken* messages = jsontok_parse(messages_wrapped->as_string, &err);
+
+  size_t i;
+  for (i = 0; i < messages->as_array->length; i++) {
+    struct JsonToken* message_container =
+        jsontok_parse(messages->as_array->elements[i]->as_string, &err);
+    if (err) {
+      fprintf(stderr, "Failed to parse message at index %zu: %s\n%s\n", i,
+              jsontok_strerror(err), response->body);
+      discrub_search_response_free(search_response);
+      free_http_response(response);
+      return NULL;
+    }
+    struct JsonToken* message = jsontok_parse(
+        message_container->as_array->elements[0]->as_string, &err);
+    if (err) {
+      fprintf(stderr, "Failed to parse message at index %zu: %s\n%s\n", i,
+              jsontok_strerror(err), response->body);
+      jsontok_free(body_json);
+      jsontok_free(messages);
+      jsontok_free(message_container);
+      discrub_search_response_free(search_response);
+      free_http_response(response);
+      return NULL;
+    }
+    struct JsonToken* wrapped_author =
+        jsontok_get(message->as_object, "author");
+    if (wrapped_author == NULL || wrapped_author->type != JSON_WRAPPED_OBJECT) {
+      fprintf(
+          stderr,
+          "Failed to parse message at index %zu: Missing author object\n%s\n",
+          i, response->body);
+      jsontok_free(body_json);
+      jsontok_free(messages);
+      jsontok_free(message_container);
+      jsontok_free(message);
+      discrub_search_response_free(search_response);
+      free_http_response(response);
+      return NULL;
+    }
+    struct JsonToken* author = jsontok_parse(wrapped_author->as_string, &err);
+    struct JsonToken* author_id = jsontok_get(author->as_object, "id");
+    struct JsonToken* author_username =
+        jsontok_get(author->as_object, "username");
+    struct JsonToken* content = jsontok_get(message->as_object, "content");
+    struct JsonToken* id = jsontok_get(message->as_object, "id");
+    struct JsonToken* timestamp = jsontok_get(message->as_object, "timestamp");
+    if (author == NULL || author_id == NULL || author_username == NULL ||
+        content == NULL || id == NULL || timestamp == NULL) {
+      fprintf(stderr,
+              "Failed to parse message at index %zu: Missing one or more of "
+              "{author.id,author.username,content,id,timestamp\n%s\n",
+              i, response->body);
+      jsontok_free(body_json);
+      jsontok_free(messages);
+      jsontok_free(message_container);
+      jsontok_free(message);
+      jsontok_free(author);
+      discrub_search_response_free(search_response);
+      free_http_response(response);
+      return NULL;
+    }
+    struct DiscordMessage* new_message = malloc(sizeof(struct DiscordMessage));
+    if (new_message == NULL) {
+      fprintf(stderr, "Failed to allocate memory for new message\n");
+      jsontok_free(body_json);
+      jsontok_free(messages);
+      jsontok_free(message_container);
+      jsontok_free(message);
+      jsontok_free(author);
+      discrub_search_response_free(search_response);
+      free_http_response(response);
+    }
+    new_message->author_id = strdup(author_id->as_string);
+    new_message->author_username = strdup(author_username->as_string);
+    new_message->content = strdup(content->as_string);
+    new_message->id = strdup(id->as_string);
+    new_message->timestamp = strdup(timestamp->as_string);
+    search_response->messages[i] = new_message;
+  }
+  return search_response;
+}
+
+void discrub_search_response_free(struct SearchResponse* search_response) {
+  if (search_response == NULL) {
+    return;
+  }
+  size_t i;
+  for (i = 0; i < search_response->length; i++) {
+    struct DiscordMessage* message = search_response->messages[i];
+    if (message) {
+      free(message->author_id);
+      free(message->author_username);
+      free(message->content);
+      free(message->id);
+      free(message->timestamp);
+      free(message);
+    }
+  }
+  free(search_response->messages);
+  free(search_response);
 }
 
 struct SearchOptions* options_from_json(const char* json_string) {

@@ -15,7 +15,7 @@ struct DiscordMessage {
 };
 
 struct SearchResponse {
-  struct DiscordMessage* messages;
+  struct DiscordMessage** messages;
   size_t length;
 };
 
@@ -38,8 +38,11 @@ struct LoginResponse {
 struct LoginResponse* discrub_login(BIO* bio, const char* email,
                                     const char* password);
 
-struct SearchResponse* discrub_search(BIO* bio, struct SearchOptions* options);
+struct SearchResponse* discrub_search(BIO* bio, const char* token,
+                                      struct SearchOptions* options);
 
 struct SearchOptions* options_from_json(const char* json_string);
+
+void discrub_search_response_free(struct SearchResponse* search_response);
 
 #endif

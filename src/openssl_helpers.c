@@ -79,7 +79,7 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
     fprintf(stderr, "perform_http_request: Null argument(s)");
     return NULL;
   }
-  /*BIO_reset(bio);*/
+  BIO_reset(bio);
   const size_t request_length = strlen(request);
   size_t total_written = 0;
   while (total_written < request_length) {

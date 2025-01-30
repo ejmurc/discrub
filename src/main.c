@@ -80,7 +80,15 @@ int main() {
     goto cleanup;
   }
   options->author_id = uid;
-  struct SearchResponse* response = discrub_search(bio, options);
+  struct SearchResponse* response = discrub_search(bio, token, options);
+  size_t i = 0;
+  for (; i < response->length; i++) {
+    struct DiscordMessage* message = response->messages[i];
+    if (message) {
+      printf("Deleting message <%s>...\n", message->id);
+    }
+  }
+  discrub_search_response_free(response);
 
 cleanup:
   BIO_free_all(bio);
