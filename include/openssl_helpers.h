@@ -1,29 +1,32 @@
 #ifndef OPENSSL_HELPERS_H
 #define OPENSSL_HELPERS_H
 
+#include <ctype.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+
+struct Header {
+  char* key;
+  char* value;
+  struct Header* next;
+};
 
 struct HTTPResponse {
+  char* raw;
+  char* body;
+  struct Header* headers;
   uint16_t code;
-  char *data;
-  unsigned int length;
 };
 
-enum HTTPError {
-  HTTP_ENOERR,
-  HTTP_ENOMEM,
-  HTTP_EBIO,
-  HTTP_EPARSE,
-};
+SSL_CTX* create_ssl_ctx();
 
-struct HTTPResponse *http_request(BIO *connection, const char *request,
-                                  enum HTTPError *error);
+BIO* create_bio(SSL_CTX* ctx, const char* hostname);
 
-const char *http_strerror(enum HTTPError *error);
+struct HTTPResponse* perform_http_request(BIO* bio, const char* request);
+
+void free_http_response(struct HTTPResponse* response);
 
 #endif

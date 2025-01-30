@@ -1,6 +1,3 @@
-# Secrets
-.discrub_cache
-
 # Build
 build/
 options.json
