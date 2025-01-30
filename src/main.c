@@ -1,5 +1,7 @@
 #include <openssl/ssl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "discrub_client.h"
 #include "logging.h"
@@ -83,45 +85,58 @@ int main() {
     goto cleanup;
   }
   options->author_id = uid;
+  srand(time(NULL));
   struct SearchResponse* response = discrub_search(bio, token, options);
-  size_t total_messages = response->total_messages;
-  printf_verbose("Total messages in query: %zu\n", response->total_messages);
-  while (total_messages > 0) {
-    printf_verbose("Messages retrieved: %zu\n", response->length);
+  const size_t total_messages = response->total_messages;
+  size_t remaining_messages = total_messages;
+  while (remaining_messages > 0) {
+    printf_verbose(
+        "Remaining: %zu/%zu (%.2f%%), Fetched: %zu\n", remaining_messages,
+        total_messages,
+        (double)(total_messages - remaining_messages) / total_messages,
+        response->length);
     size_t i = 0;
     for (; i < response->length; i++) {
       struct DiscordMessage* message = response->messages[i];
-      printf_verbose(
-          "Deleting message { id: \"%s\", author: \"%s\", content: \"%.40s\", "
-          "timestamp: \"%s\" }\n",
-          message->id, message->author_username, message->content,
-          message->timestamp ? message->timestamp : "unknown");
-      double retry =
-          discrub_delete_message(bio, token, options->channel_id, message->id);
-      if (retry == -1) {
-        printf("Breaking from loop\n");
-        break;
-      } else if (retry == 0) {
-        total_messages--;
-        sleep_ms(1000);
-      } else {
-        printf_verbose("Rate limited. Retrying in %dms.\n", retry * 1000);
-        sleep_ms(retry * 1000);
+      printf_verbose("Deleting message <%s> {%s} [%s] %.40s\n", message->id,
+                     message->timestamp, message->author_username,
+                     message->content);
+      int retry = discrub_delete_message(bio, token, options->channel_id,
+                                         message->id),
+          attempts = 0;
+      while (retry > 0 && attempts < 10) {
+        const int offset = rand() % 1000;
+        printf_verbose("Rate limited. Retrying in %dms.\n",
+                       retry * 10000 + offset);
+        sleep_ms(retry * 10000 + offset);
+        retry = discrub_delete_message(bio, token, options->channel_id,
+                                       message->id);
+        attempts++;
       }
+      if (retry == -1) {
+        fprintf(
+            stderr,
+            "Failed to delete message. Continuing with iterations in batch.\n");
+        continue;
+      }
+      remaining_messages--;
+      sleep_ms(1000 + rand() % 200);
     }
-    if (total_messages > 25) {
-      options->offset = total_messages - 25;
+    if (response->length > 0) {
+      free(options->max_id);
+      options->max_id = strdup(response->messages[response->length - 1]->id);
     } else {
-      options->offset = 0;
+      printf_verbose("No more messages found.\n");
+      break;
     }
     discrub_search_response_free(response);
+    sleep_ms(1500);
     response = discrub_search(bio, token, options);
     if (response == NULL) {
       printf_verbose(
           "Failed to fetch the next batch of messages. Exiting loop.\n");
       break;
     }
-    total_messages = response->total_messages;
   }
   discrub_search_response_free(response);
 

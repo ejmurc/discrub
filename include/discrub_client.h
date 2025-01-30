@@ -29,6 +29,7 @@ struct SearchOptions {
   char* content;
   char* mentions;
   bool pinned;
+  char* max_id;
 };
 
 struct LoginResponse {
@@ -42,8 +43,8 @@ struct LoginResponse* discrub_login(BIO* bio, const char* email,
 struct SearchResponse* discrub_search(BIO* bio, const char* token,
                                       struct SearchOptions* options);
 
-double discrub_delete_message(BIO* bio, const char* token,
-                              const char* channel_id, const char* message_id);
+int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
+                           const char* message_id);
 
 struct SearchOptions* options_from_json(const char* json_string);
 

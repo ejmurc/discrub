@@ -27,6 +27,7 @@ static char* get_params(const struct SearchOptions* options) {
   add_param(&params, "channel_id", options->channel_id);
   add_param(&params, "content", options->content);
   add_param(&params, "mentions", options->mentions);
+  add_param(&params, "max_id", options->max_id);
   add_param(&params, "include_nsfw", options->include_nsfw ? "true" : "false");
   add_param(&params, "pinned", options->pinned ? "true" : "false");
   if (options->offset) {
@@ -215,6 +216,9 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     free(search_response);
     free_http_response(response);
   }
+  if (search_response->length == 0) {
+    printf("%s\n", response->body);
+  }
   size_t i;
   for (i = 0; i < messages->as_array->length; i++) {
     struct JsonToken* message_container =
@@ -296,8 +300,8 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
   return search_response;
 }
 
-double discrub_delete_message(BIO* bio, const char* token,
-                              const char* channel_id, const char* message_id) {
+int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
+                           const char* message_id) {
   if (bio == NULL || token == NULL || channel_id == NULL ||
       message_id == NULL) {
     fprintf(stderr, "discrub_delete_message: Null argument(s)\n");
@@ -320,18 +324,17 @@ double discrub_delete_message(BIO* bio, const char* token,
     return -1;
   }
   if (response->code != 204) {
-    enum JsonError err = JSON_ENOERR;
-    struct JsonToken* body_json = jsontok_parse(response->body, &err);
-    if (body_json) {
-      struct JsonToken* retry_after =
-          jsontok_get(body_json->as_object, "retry_after");
-      if (retry_after) {
-        free_http_response(response);
-        double retry_after_ms = retry_after->as_number;
-        jsontok_free(body_json);
-        return retry_after_ms;
+    struct Header* header = response->headers;
+    while (header) {
+      if (strcmp(header->key, "retry-after") == 0) {
+        char* endptr;
+        long value = strtol(header->value, &endptr, 10);
+        if (*endptr == '\0' && value > 0) {
+          free_http_response(response);
+          return (int)value;
+        }
       }
-      jsontok_free(body_json);
+      header = header->next;
     }
     fprintf(stderr, "discrub_delete_message: Response code was %hu\n",
             response->code);
