@@ -42,32 +42,32 @@ int main() {
     goto cleanup;
   }
   char *uid = NULL, *token = NULL;
-  printf_verbose("Checking cache for authentication credentials at '%s'...",
+  printf_verbose("Checking cache for authentication credentials at '%s'...\n",
                  CREDENTIALS_FILEPATH);
   if (load_cache(CREDENTIALS_FILEPATH, &uid, &token)) {
-    printf_verbose("Could not find authentication credentials in cache.");
+    printf_verbose("Could not find authentication credentials in cache.\n");
     char *email = NULL, *password = NULL;
     if (prompt_credentials(&email, &password)) {
-      printf_verbose("Failed to retrieve email or password from user prompt.");
+      printf_verbose("Failed to retrieve email or password from user prompt.\n");
       goto cleanup;
     }
     struct LoginResponse* response = discrub_login(bio, email, password);
     free(password);
     if (response == NULL) {
       printf_verbose(
-          "Authentication failed: No response received from 'discrub_login'.");
+          "Authentication failed: No response received from 'discrub_login'.\n");
       goto cleanup;
     }
     uid = response->uid;
     token = response->token;
     if (save_cache(CREDENTIALS_FILEPATH, uid, token)) {
-      printf_verbose("Failed to save authentication credentials to '%s'.",
+      printf_verbose("Failed to save authentication credentials to '%s'.\n",
                      CREDENTIALS_FILEPATH);
       goto cleanup;
     }
     free(response);
   }
-  printf_verbose("User <%s> successfully authenticated.", uid);
+  printf_verbose("User <%s> successfully authenticated.\n", uid);
 
   char* options_string = read_file("options.json");
   if (options_string == NULL) {
@@ -81,10 +81,11 @@ int main() {
   }
   options->author_id = uid;
   struct SearchResponse* response = discrub_search(bio, token, options);
+  printf_verbose("Total messages in query: %zu\n", response->total_messages);
   size_t i = 0;
   for (; i < response->length; i++) {
     struct DiscordMessage* message = response->messages[i];
-    printf("Deleting message <%s>...\n", message->id);
+    printf_verbose("Deleting message <%s>\n", message->id);
   }
   discrub_search_response_free(response);
 

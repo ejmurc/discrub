@@ -166,6 +166,7 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     return NULL;
   }
   search_response->length = 0;
+  search_response->total_messages = 0;
   search_response->messages = NULL;
   enum JsonError err = JSON_ENOERR;
   struct JsonToken* body_json = jsontok_parse(response->body, &err);
@@ -176,6 +177,16 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     free_http_response(response);
     return NULL;
   }
+  struct JsonToken* total_results =
+      jsontok_get(body_json->as_object, "total_results");
+  if (total_results == NULL) {
+    fprintf(stderr, "total_results is null in response JSON\n%s\n",
+            response->body);
+    free(search_response);
+    free_http_response(response);
+    return NULL;
+  }
+  search_response->total_messages = total_results->as_number;
   struct JsonToken* messages_wrapped =
       jsontok_get(body_json->as_object, "messages");
   if (messages_wrapped == NULL) {

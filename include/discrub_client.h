@@ -17,6 +17,7 @@ struct DiscordMessage {
 struct SearchResponse {
   struct DiscordMessage** messages;
   size_t length;
+  size_t total_messages;
 };
 
 struct SearchOptions {
