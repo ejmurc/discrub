@@ -216,9 +216,6 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     free(search_response);
     free_http_response(response);
   }
-  if (search_response->length == 0) {
-    printf("%s\n", response->body);
-  }
   size_t i;
   for (i = 0; i < messages->as_array->length; i++) {
     struct JsonToken* message_container =

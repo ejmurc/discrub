@@ -24,6 +24,9 @@
   "  - mentions<string>: A string to filter messages that mention a specific " \
   "user or role.\n"                                                            \
   "  - pinned<boolean>: A boolean flag to filter only pinned messages.\n"      \
+  "  - delay_ms<size_t>: An unsigned integer representing the initial delay "  \
+  "between delete requests. Keep in mind this delay increases exponentially "  \
+  "upon deletion ratelimiting.\n"                                              \
   "Example 'options.json':\n"                                                  \
   "{\n"                                                                        \
   "  \"server_id\": \"123456789012345678\",\n"                                 \
@@ -32,6 +35,7 @@
   "  \"content\": \"search keyword\",\n"                                       \
   "  \"mentions\": \"username.asdf\",\n"                                       \
   "  \"pinned\": true\n"                                                       \
+  "  \"delay_ms\": 500\n"                                                      \
   "}\n"
 
 int main() {
@@ -88,10 +92,13 @@ int main() {
   options->author_id = uid;
   srand(time(NULL));
   struct SearchResponse* response = discrub_search(bio, token, options);
+  if (response == NULL) {
+    fprintf(stderr, "Failed to get response from discrub_search\n");
+    goto cleanup;
+  }
   const size_t total_messages = response->total_messages;
   size_t remaining_messages = total_messages;
   size_t delay_ms = options->delay_ms;
-  printf("%zu\n", options->delay_ms);
   if (delay_ms == 0) {
     delay_ms = 1500;
   }
@@ -108,7 +115,8 @@ int main() {
                      message->timestamp, message->author_username,
                      message->content);
       int retry = discrub_delete_message(bio, token, options->channel_id,
-                                         message->id), attempts = 1;
+                                         message->id),
+          attempts = 1;
       if (retry > 0) {
         delay_ms *= 2;
       }
