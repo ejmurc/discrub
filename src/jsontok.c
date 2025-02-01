@@ -572,20 +572,40 @@ static struct JsonArray* jsontok_parse_array(const char** json_string,
 
 static char* jsontok_parse_sub_object(const char** json_string,
                                       enum JsonError* error) {
-  char* ptr = (char*)(*json_string + 1);
+  const char* ptr = *json_string + 1;
   size_t counter = 1;
-  while (counter > 1 || *ptr != '}') {
+  while (*ptr && counter > 0) {
+    if (*ptr == '"') {
+      ptr++;
+      while (*ptr && *ptr != '"') {
+        if (*ptr == '\\' && *(ptr + 1) != '\0')
+          ptr++;
+        ptr++;
+      }
+      if (*ptr == '\0') {
+        *error = JSON_EFMT;
+        return NULL;
+      }
+      ptr++;
+    } else if (*ptr == '{') {
+      counter++;
+      ptr++;
+    } else if (*ptr == '}') {
+      counter--;
+      ptr++;
+    } else {
+      ptr++;
+    }
     if (*ptr == '\0') {
       *error = JSON_EFMT;
       return NULL;
     }
-    if (*ptr == '{')
-      counter++;
-    else if (*ptr == '}')
-      counter--;
-    ptr += (*ptr == '\\') + 1;
   }
-  size_t length = ptr - *json_string + 1;
+  if (counter != 0) {
+    *error = JSON_EFMT;
+    return NULL;
+  }
+  size_t length = ptr - *json_string;
   char* substr = malloc(length + 1);
   if (!substr) {
     *error = JSON_ENOMEM;
@@ -593,33 +613,53 @@ static char* jsontok_parse_sub_object(const char** json_string,
   }
   strncpy(substr, *json_string, length);
   substr[length] = '\0';
-  *json_string = ptr + 1;
+  *json_string = ptr;
   return substr;
 }
 
 static char* jsontok_parse_sub_array(const char** json_string,
                                      enum JsonError* error) {
-  char* ptr = (char*)(*json_string + 1);
+  const char* ptr = *json_string + 1;
   size_t counter = 1;
-  while (counter > 1 || *ptr != ']') {
+  while (*ptr && counter > 0) {
+    if (*ptr == '"') {
+      ptr++;
+      while (*ptr && *ptr != '"') {
+        if (*ptr == '\\' && *(ptr + 1) != '\0')
+          ptr++;
+        ptr++;
+      }
+      if (*ptr == '\0') {
+        *error = JSON_EFMT;
+        return NULL;
+      }
+      ptr++;
+    } else if (*ptr == '[') {
+      counter++;
+      ptr++;
+    } else if (*ptr == ']') {
+      counter--;
+      ptr++;
+    } else {
+      ptr++;
+    }
     if (*ptr == '\0') {
       *error = JSON_EFMT;
       return NULL;
     }
-    if (*ptr == '[')
-      counter++;
-    else if (*ptr == ']')
-      counter--;
-    ptr += (*ptr == '\\') + 1;
   }
-  size_t length = ptr - *json_string + 1;
+  if (counter != 0) {
+    *error = JSON_EFMT;
+    return NULL;
+  }
+  size_t length = ptr - *json_string;
   char* substr = malloc(length + 1);
   if (!substr) {
-    *error = JSON_EFMT;
+    *error = JSON_ENOMEM;
     return NULL;
   }
   strncpy(substr, *json_string, length);
   substr[length] = '\0';
-  *json_string = ptr + 1;
+  *json_string = ptr;
   return substr;
 }
