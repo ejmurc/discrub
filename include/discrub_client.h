@@ -30,6 +30,7 @@ struct SearchOptions {
   char* mentions;
   bool pinned;
   char* max_id;
+  size_t delay_ms;
 };
 
 struct LoginResponse {

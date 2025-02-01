@@ -90,6 +90,11 @@ int main() {
   struct SearchResponse* response = discrub_search(bio, token, options);
   const size_t total_messages = response->total_messages;
   size_t remaining_messages = total_messages;
+  size_t delay_ms = options->delay_ms;
+  printf("%zu\n", options->delay_ms);
+  if (delay_ms == 0) {
+    delay_ms = 1500;
+  }
   while (remaining_messages > 0) {
     printf_verbose(
         "Remaining: %zu/%zu (%.2f%%), Fetched: %zu\n", remaining_messages,
@@ -103,13 +108,15 @@ int main() {
                      message->timestamp, message->author_username,
                      message->content);
       int retry = discrub_delete_message(bio, token, options->channel_id,
-                                         message->id),
-          attempts = 0;
-      while (retry > 0 && attempts < 10) {
+                                         message->id), attempts = 1;
+      if (retry > 0) {
+        delay_ms *= 2;
+      }
+      while (retry > 0 && attempts <= 10) {
         const int offset = rand() % 1000;
         printf_verbose("Rate limited. Retrying in %dms.\n",
-                       retry * 10000 + offset);
-        sleep_ms(retry * 10000 + offset);
+                       retry * attempts + offset);
+        sleep_ms(retry * attempts + offset);
         retry = discrub_delete_message(bio, token, options->channel_id,
                                        message->id);
         attempts++;
@@ -121,7 +128,7 @@ int main() {
         continue;
       }
       remaining_messages--;
-      sleep_ms(1000 + rand() % 200);
+      sleep_ms(delay_ms + rand() % 200);
     }
     if (response->length > 0) {
       free(options->max_id);

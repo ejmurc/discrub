@@ -413,6 +413,16 @@ struct SearchOptions* options_from_json(const char* json_string) {
   if (pinned && pinned->type == JSON_BOOLEAN) {
     options->pinned = pinned->as_boolean;
   }
+  struct JsonToken* delay_ms =
+      jsontok_get(options_object->as_object, "delay_ms");
+  if (delay_ms && delay_ms->type == JSON_NUMBER) {
+    double delay_value = delay_ms->as_number;
+    if (delay_value >= 0 && delay_value <= (double)SIZE_MAX) {
+      options->delay_ms = (size_t)delay_value;
+    } else {
+      goto cleanup;
+    }
+  }
   jsontok_free(options_object);
   return options;
 cleanup:
