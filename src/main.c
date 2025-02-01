@@ -80,6 +80,7 @@ int main() {
     goto cleanup;
   }
   struct SearchOptions* options = options_from_json(options_string);
+  free(options_string);
   if (options == NULL) {
     printf(OPTIONS_HELP_MESSAGE);
     goto cleanup;
@@ -138,7 +139,9 @@ int main() {
       break;
     }
   }
+  discrub_search_options_free(options);
   discrub_search_response_free(response);
+  free(token);
 
 cleanup:
   BIO_free_all(bio);

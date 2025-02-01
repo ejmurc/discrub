@@ -79,7 +79,8 @@ static char* get_password() {
 }
 
 int load_cache(char* filepath, char** uid, char** token) {
-  if (filepath[0] == '~') {
+  int tilde = filepath[0] == '~';
+  if (tilde) {
     char* home = getenv("HOME");
     if (home == NULL) {
       home = getenv("USERPROFILE");
@@ -99,14 +100,14 @@ int load_cache(char* filepath, char** uid, char** token) {
     filepath = expanded_path;
   }
   char* credentials = read_file(filepath);
-  if (filepath[0] == '~') {
+  if (tilde) {
     free(filepath);
   }
   if (credentials == NULL) {
     return 1;
   }
-  *token = strtok(credentials, " ");
-  *uid = strtok(NULL, " ");
+  *token = strdup(strtok(credentials, " "));
+  *uid = strdup(strtok(NULL, " "));
   if (*token == NULL || *uid == NULL) {
     free(credentials);
     return 1;
@@ -115,7 +116,8 @@ int load_cache(char* filepath, char** uid, char** token) {
 }
 
 int save_cache(char* filepath, const char* uid, const char* token) {
-  if (filepath[0] == '~') {
+  int tilde = filepath[0] == '~';
+  if (tilde) {
     char* home = getenv("HOME");
     if (home == NULL) {
       home = getenv("USERPROFILE");
@@ -143,7 +145,7 @@ int save_cache(char* filepath, const char* uid, const char* token) {
   }
   fprintf(file, "%s %s", token, uid);
   fclose(file);
-  if (filepath[0] == '~') {
+  if (tilde) {
     free(filepath);
   }
   return 0;

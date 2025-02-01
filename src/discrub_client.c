@@ -296,7 +296,13 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     new_message->id = strdup(id->as_string);
     new_message->timestamp = strdup(timestamp->as_string);
     search_response->messages[i] = new_message;
+    jsontok_free(message_container);
+    jsontok_free(message);
+    jsontok_free(author);
   }
+  jsontok_free(body_json);
+  jsontok_free(messages);
+  free_http_response(response);
   return search_response;
 }
 
@@ -341,6 +347,7 @@ int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
     free_http_response(response);
     return -1;
   }
+  free_http_response(response);
   return 0;
 }
 
@@ -412,4 +419,29 @@ cleanup:
   free(options);
   jsontok_free(options_object);
   return NULL;
+}
+
+void discrub_search_options_free(struct SearchOptions* options) {
+  if (options == NULL) {
+    return;
+  }
+  if (options->author_id) {
+    free(options->author_id);
+  }
+  if (options->channel_id) {
+    free(options->channel_id);
+  }
+  if (options->server_id) {
+    free(options->server_id);
+  }
+  if (options->content) {
+    free(options->content);
+  }
+  if (options->mentions) {
+    free(options->mentions);
+  }
+  if (options->max_id) {
+    free(options->max_id);
+  }
+  free(options);
 }

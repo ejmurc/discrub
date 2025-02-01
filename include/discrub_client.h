@@ -50,4 +50,6 @@ struct SearchOptions* options_from_json(const char* json_string);
 
 void discrub_search_response_free(struct SearchResponse* search_response);
 
+void discrub_search_options_free(struct SearchOptions* options);
+
 #endif
