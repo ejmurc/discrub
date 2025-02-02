@@ -36,6 +36,7 @@
   "  \"mentions\": \"username.asdf\",\n"                                       \
   "  \"pinned\": true\n"                                                       \
   "  \"delay_ms\": 500\n"                                                      \
+  "  \"max_id\": \"123456789012345678\",\n"                                    \
   "}\n"
 
 int main() {

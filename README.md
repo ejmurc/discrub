@@ -27,6 +27,7 @@ The program requires a valid `options.json` file to run. Ensure the file exists 
 - **`mentions` (string)** – Filter messages mentioning a specific user or role.
 - **`pinned` (boolean)** – Filter only pinned messages.
 - **`delay_ms` (size_t)** – Initial delay (in milliseconds) between delete requests. This delay increases exponentially when hitting rate limits.
+- **`max_id` (string)**    Search for messages before the specified max\_id.
 
 ### Example `options.json`:
 ```json
@@ -37,7 +38,8 @@ The program requires a valid `options.json` file to run. Ensure the file exists 
   "content": "search keyword",
   "mentions": "username.asdf",
   "pinned": true,
-  "delay_ms": 500
+  "delay_ms": 500,
+  "max_id": "123456789012345678"
 }
 ```
 

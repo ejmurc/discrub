@@ -406,6 +406,10 @@ struct SearchOptions* options_from_json(const char* json_string) {
   if (mentions && mentions->type == JSON_STRING) {
     options->mentions = strdup(mentions->as_string);
   }
+  struct JsonToken* max_id = jsontok_get(options_object->as_object, "max_id");
+  if (max_id && max_id->type == JSON_STRING) {
+    options->max_id = strdup(max_id->as_string);
+  }
   struct JsonToken* pinned = jsontok_get(options_object->as_object, "pinned");
   if (pinned && pinned->type == JSON_BOOLEAN) {
     options->pinned = pinned->as_boolean;
