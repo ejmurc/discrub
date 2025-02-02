@@ -1,6 +1,6 @@
 # Discrub
 
-Discrub is an open source terminal client for mass deletion of messages on Discord.
+Discrub is a lightweight CLI tool for bulk Discord message deletion with customizable search queries.
 
 ![Discrub Screenshot](https://github.com/eliasmurcray/discrub/blob/mainline/preview.png)
 
