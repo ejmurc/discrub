@@ -90,8 +90,8 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
     } else if (written == 0) {
       continue;
     } else {
-      fprintf(stderr, "BIO_write error: %s\n",
-              ERR_reason_error_string(ERR_get_error()));
+      fprintf(stderr, "BIO_write error:\n");
+      ERR_print_errors_fp(stderr);
       return NULL;
     }
   }
@@ -115,8 +115,8 @@ struct HTTPResponse* perform_http_request(BIO* bio, const char* request) {
       break;
     } else if (BIO_should_retry(bio) == 0 ||
                (BIO_should_read(bio) == 0 && BIO_should_write(bio) == 0)) {
-      fprintf(stderr, "BIO_read failed: %s\n",
-              ERR_reason_error_string(ERR_get_error()));
+      fprintf(stderr, "BIO_read failed:\n");
+      ERR_print_errors_fp(stderr);
       free(raw);
       return NULL;
     }
