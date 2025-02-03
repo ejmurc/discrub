@@ -107,7 +107,7 @@ int main() {
     printf_verbose(
         "Remaining: %zu/%zu (%.2f%%), Fetched: %zu\n", remaining_messages,
         total_messages,
-        (double)(total_messages - remaining_messages) / total_messages,
+        (total_messages - remaining_messages) * 100.0 / total_messages,
         response->length);
     size_t i = 0;
     for (; i < response->length; i++) {
