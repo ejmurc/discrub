@@ -7,12 +7,8 @@ Discrub is a lightweight CLI tool for bulk Discord message deletion with customi
 ## Dependencies
 Ensure the following dependencies are installed:
 
-- [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/)
 - [make](https://www.gnu.org/software/make/manual/make.html)
 - [OpenSSL](https://wiki.openssl.org/index.php/Binaries)
-
-### Optional
-- [clang-format](https://clang.llvm.org/docs/ClangFormat.html) (for code formatting)
 
 ## Configuration
 The program requires a valid `options.json` file to run. Ensure the file exists and contains the necessary configuration.
@@ -58,6 +54,10 @@ Run the executable as needed:
 ```sh
 ./build/discrub
 ```
+
+## Development
+
+Contributions are welcome! If you're interested in contributing, please refer to [DEVELOPMENT.md](https://github.com/eliasmurcray/discrub/blob/mainline/DEVELOPMENT.md) for setup and contribution guidelines.
 
 ## Disclaimer
 **Self-botting violates Discord’s Terms of Service and can result in account termination.** Use this script at your own discretion. The author assumes no responsibility for any consequences arising from its use.
