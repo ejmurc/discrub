@@ -260,12 +260,13 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
         jsontok_get(author->as_object, "username");
     struct JsonToken* content = jsontok_get(message->as_object, "content");
     struct JsonToken* id = jsontok_get(message->as_object, "id");
+    struct JsonToken* channel_id = jsontok_get(message->as_object, "channel_id");
     struct JsonToken* timestamp = jsontok_get(message->as_object, "timestamp");
     if (author == NULL || author_id == NULL || author_username == NULL ||
-        content == NULL || id == NULL || timestamp == NULL) {
+        content == NULL || id == NULL || channel_id == NULL || timestamp == NULL) {
       fprintf(stderr,
               "Failed to parse message at index %zu: Missing one or more of "
-              "{author.id,author.username,content,id,timestamp\n%s\n",
+              "{author.id,author.username,content,id,channel_id,timestamp\n%s\n",
               i, response->body);
       jsontok_free(body_json);
       jsontok_free(messages);
@@ -291,6 +292,7 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     new_message->author_username = strdup(author_username->as_string);
     new_message->content = strdup(content->as_string);
     new_message->id = strdup(id->as_string);
+    new_message->channel_id = strdup(channel_id->as_string);
     new_message->timestamp = strdup(timestamp->as_string);
     search_response->messages[i] = new_message;
     jsontok_free(message_container);
@@ -348,6 +350,43 @@ int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
   return 0;
 }
 
+int discrub_unarchive_thread(BIO* bio, const char* token, const char* channel_id) {
+  if (bio == NULL || token == NULL || channel_id == NULL) {
+    fprintf(stderr, "discrub_unarchive_thread: Null argument(s)\n");
+    return 1;
+  }
+  const char* json_payload = "{\"archived\":false}";
+  size_t content_length = strlen(json_payload);
+  const char* request_fmt =
+      "PATCH /api/v9/channels/%s HTTP/1.1\r\n"
+      "Host: discord.com\r\n"
+      "Authorization: %s\r\n"
+      "Content-Type: application/json\r\n"
+      "Content-Length: %zu\r\n"
+      "Connection: close\r\n"
+      "\r\n"
+      "%s";
+  size_t request_size = snprintf(NULL, 0, request_fmt, channel_id, token, content_length, json_payload) + 1;
+  char* request_string = malloc(request_size);
+  if (request_string == NULL) {
+    fprintf(stderr, "Memory allocation failed\n");
+    return 1;
+  }
+  snprintf(request_string, request_size, request_fmt, channel_id, token, content_length, json_payload);
+  struct HTTPResponse* response = perform_http_request(bio, request_string);
+  free(request_string);
+  if (response == NULL) {
+    fprintf(stderr, "HTTP request failed\n");
+    return 1;
+  }
+  if (response->code != 200) {
+    free_http_response(response);
+    return 1;
+  }
+  free_http_response(response);
+  return 0;
+}
+
 void discrub_search_response_free(struct SearchResponse* search_response) {
   if (search_response == NULL) {
     return;
@@ -359,6 +398,7 @@ void discrub_search_response_free(struct SearchResponse* search_response) {
     free(message->author_username);
     free(message->content);
     free(message->id);
+    free(message->channel_id);
     free(message->timestamp);
     free(message);
   }

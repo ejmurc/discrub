@@ -112,10 +112,17 @@ int main() {
     size_t i = 0;
     for (; i < response->length; i++) {
       struct DiscordMessage* message = response->messages[i];
+      if (strcmp(options->channel_id, message->channel_id) != 0) {
+        printf_verbose("Unarchiving thread for message <%s>: %s\n", message->id, message->channel_id);
+        if (discrub_unarchive_thread(bio, token, message->channel_id)) {
+          printf_verbose("Failed to unarchive thread. Continuing with iterations in batch.\n");
+          continue;
+        }
+      }
       printf_verbose("Deleting message <%s> {%s} [%s] %.40s\n", message->id,
                      message->timestamp, message->author_username,
                      message->content);
-      int retry = discrub_delete_message(bio, token, options->channel_id,
+      int retry = discrub_delete_message(bio, token, message->channel_id,
                                          message->id),
           attempts = 1;
       if (retry > 0) {
@@ -126,14 +133,12 @@ int main() {
         printf_verbose("Rate limited. Retrying in %dms.\n",
                        retry * attempts + offset);
         sleep_ms(retry * attempts + offset);
-        retry = discrub_delete_message(bio, token, options->channel_id,
+        retry = discrub_delete_message(bio, token, message->channel_id,
                                        message->id);
         attempts++;
       }
       if (retry == -1) {
-        fprintf(
-            stderr,
-            "Failed to delete message. Continuing with iterations in batch.\n");
+        printf_verbose("Failed to delete message. Continuing with iterations in batch.\n");
         continue;
       }
       remaining_messages--;
