@@ -113,7 +113,7 @@ int main() {
     for (; i < response->length; i++) {
       struct DiscordMessage* message = response->messages[i];
       if (strcmp(options->channel_id, message->channel_id) != 0) {
-        printf_verbose("Unarchiving thread for message <%s>: %s\n", message->id, message->channel_id);
+        printf_verbose("Unarchiving thread for message <%s>\n", message->id, message->channel_id);
         if (discrub_unarchive_thread(bio, token, message->channel_id)) {
           printf_verbose("Failed to unarchive thread. Continuing with iterations in batch.\n");
           continue;
