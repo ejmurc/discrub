@@ -13,6 +13,7 @@ struct DiscordMessage {
   char* content;
   char* id;
   char* timestamp;
+  bool is_in_thread;
 };
 
 struct SearchResponse {

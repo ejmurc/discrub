@@ -15,9 +15,9 @@ The program requires a valid `options.json` file to run. Ensure the file exists 
 
 ### Required Options:
 - **`server_id` (string)** – The ID of the server to search within.
-- **`channel_id` (string)** – The ID of the channel to search within.
 
 ### Optional Options:
+- **`channel_id` (string)** – The ID of the channel to search within.
 - **`include_nsfw` (boolean)** – Include or exclude NSFW content.
 - **`content` (string)** – Search for messages containing specific text.
 - **`mentions` (string)** – Filter messages mentioning a specific user or role.

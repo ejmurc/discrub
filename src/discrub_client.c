@@ -216,6 +216,7 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     free(search_response);
     free_http_response(response);
   }
+  struct JsonToken* threads = jsontok_get(body_json->as_object, "threads");
   size_t i;
   for (i = 0; i < messages->as_array->length; i++) {
     struct JsonToken* message_container =
@@ -278,7 +279,7 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
       fprintf(
           stderr,
           "Failed to parse message at index %zu: Missing one or more of "
-          "{author.id,author.username,content,id,channel_id,timestamp\n%s\n",
+          "{author.id,author.username,content,id,channel_id,timestamp}\n%s\n",
           i, response->body);
       jsontok_free(body_json);
       jsontok_free(messages);
@@ -306,6 +307,36 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
     new_message->id = strdup(id->as_string);
     new_message->channel_id = strdup(channel_id->as_string);
     new_message->timestamp = strdup(timestamp->as_string);
+
+    new_message->is_in_thread = 0;
+    if (threads) {
+      size_t j = 0;
+      for (; j < threads->as_array->length; j++) {
+        struct JsonToken* thread =
+            jsontok_parse(threads->as_array->elements[j]->as_string, &err);
+        if (err) {
+          fprintf(stderr, "Failed to parse thread at index %zu: %s\n%s\n", j,
+                  jsontok_strerror(err), response->body);
+          jsontok_free(body_json);
+          jsontok_free(messages);
+          jsontok_free(message_container);
+          jsontok_free(message);
+          jsontok_free(author);
+          discrub_search_response_free(search_response);
+          free_http_response(response);
+          return NULL;
+        }
+        struct JsonToken* thread_id = jsontok_get(thread->as_object, "id");
+        if (thread_id &&
+            strcmp(thread_id->as_string, channel_id->as_string) == 0) {
+          new_message->is_in_thread = 1;
+          jsontok_free(thread);
+          break;
+        }
+        jsontok_free(thread);
+      }
+    }
+
     search_response->messages[i] = new_message;
     jsontok_free(message_container);
     jsontok_free(message);
@@ -445,11 +476,10 @@ struct SearchOptions* options_from_json(const char* json_string) {
   }
   struct JsonToken* channel_id =
       jsontok_get(options_object->as_object, "channel_id");
-  if (channel_id == NULL || channel_id->type != JSON_STRING) {
-    goto cleanup;
+  if (channel_id && channel_id->type == JSON_STRING) {
+    options->channel_id = strdup(channel_id->as_string);
   }
   options->server_id = strdup(server_id->as_string);
-  options->channel_id = strdup(channel_id->as_string);
   struct JsonToken* include_nsfw =
       jsontok_get(options_object->as_object, "include_nsfw");
   if (include_nsfw && include_nsfw->type == JSON_BOOLEAN) {

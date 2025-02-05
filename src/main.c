@@ -16,8 +16,8 @@
   "configuration.\n"                                                           \
   "The configuration should include the following required options:\n"         \
   "  - server_id<string>: The ID of the server to search within.\n"            \
-  "  - channel_id<string>: The ID of the channel to search within.\n"          \
   "With the following non-required options:\n"                                 \
+  "  - channel_id<string>: The ID of the channel to search within.\n"          \
   "  - include_nsfw<boolean>: A boolean flag to include or exclude NSFW "      \
   "content.\n"                                                                 \
   "  - content<string>: A string to search for within the message content.\n"  \
@@ -114,7 +114,7 @@ int main() {
       struct DiscordMessage* message = response->messages[i];
       if (message == NULL)
         continue;
-      if (strcmp(options->channel_id, message->channel_id) != 0) {
+      if (message->type == 19) {
         printf_verbose("Unarchiving thread for message <%s>\n", message->id,
                        message->channel_id);
         if (discrub_unarchive_thread(bio, token, message->channel_id)) {
