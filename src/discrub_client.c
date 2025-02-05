@@ -255,19 +255,31 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
       return NULL;
     }
     struct JsonToken* author = jsontok_parse(wrapped_author->as_string, &err);
+    struct JsonToken* author_bot = jsontok_get(author->as_object, "bot");
+    if (author_bot && author_bot->as_boolean == 1) {
+      jsontok_free(message_container);
+      jsontok_free(message);
+      jsontok_free(author);
+      search_response->total_messages--;
+      search_response->length--;
+      continue;
+    }
     struct JsonToken* author_id = jsontok_get(author->as_object, "id");
     struct JsonToken* author_username =
         jsontok_get(author->as_object, "username");
     struct JsonToken* content = jsontok_get(message->as_object, "content");
     struct JsonToken* id = jsontok_get(message->as_object, "id");
-    struct JsonToken* channel_id = jsontok_get(message->as_object, "channel_id");
+    struct JsonToken* channel_id =
+        jsontok_get(message->as_object, "channel_id");
     struct JsonToken* timestamp = jsontok_get(message->as_object, "timestamp");
     if (author == NULL || author_id == NULL || author_username == NULL ||
-        content == NULL || id == NULL || channel_id == NULL || timestamp == NULL) {
-      fprintf(stderr,
-              "Failed to parse message at index %zu: Missing one or more of "
-              "{author.id,author.username,content,id,channel_id,timestamp\n%s\n",
-              i, response->body);
+        content == NULL || id == NULL || channel_id == NULL ||
+        timestamp == NULL) {
+      fprintf(
+          stderr,
+          "Failed to parse message at index %zu: Missing one or more of "
+          "{author.id,author.username,content,id,channel_id,timestamp\n%s\n",
+          i, response->body);
       jsontok_free(body_json);
       jsontok_free(messages);
       jsontok_free(message_container);
@@ -350,7 +362,8 @@ int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
   return 0;
 }
 
-int discrub_unarchive_thread(BIO* bio, const char* token, const char* channel_id) {
+int discrub_unarchive_thread(BIO* bio, const char* token,
+                             const char* channel_id) {
   if (bio == NULL || token == NULL || channel_id == NULL) {
     fprintf(stderr, "discrub_unarchive_thread: Null argument(s)\n");
     return 1;
@@ -366,13 +379,16 @@ int discrub_unarchive_thread(BIO* bio, const char* token, const char* channel_id
       "Connection: close\r\n"
       "\r\n"
       "%s";
-  size_t request_size = snprintf(NULL, 0, request_fmt, channel_id, token, content_length, json_payload) + 1;
+  size_t request_size = snprintf(NULL, 0, request_fmt, channel_id, token,
+                                 content_length, json_payload) +
+                        1;
   char* request_string = malloc(request_size);
   if (request_string == NULL) {
     fprintf(stderr, "Memory allocation failed\n");
     return 1;
   }
-  snprintf(request_string, request_size, request_fmt, channel_id, token, content_length, json_payload);
+  snprintf(request_string, request_size, request_fmt, channel_id, token,
+           content_length, json_payload);
   struct HTTPResponse* response = perform_http_request(bio, request_string);
   free(request_string);
   if (response == NULL) {
@@ -394,6 +410,8 @@ void discrub_search_response_free(struct SearchResponse* search_response) {
   size_t i;
   for (i = 0; i < search_response->length; i++) {
     struct DiscordMessage* message = search_response->messages[i];
+    if (message == NULL)
+      continue;
     free(message->author_id);
     free(message->author_username);
     free(message->content);

@@ -48,7 +48,8 @@ struct SearchResponse* discrub_search(BIO* bio, const char* token,
 int discrub_delete_message(BIO* bio, const char* token, const char* channel_id,
                            const char* message_id);
 
-int discrub_unarchive_thread(BIO* bio, const char* token, const char* channel_id);
+int discrub_unarchive_thread(BIO* bio, const char* token,
+                             const char* channel_id);
 
 struct SearchOptions* options_from_json(const char* json_string);
 
