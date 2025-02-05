@@ -2,7 +2,7 @@
 
 Discrub is a lightweight CLI tool for bulk Discord message deletion with customizable search queries.
 
-![Discrub Screenshot](https://github.com/eliasmurcray/discrub/blob/mainline/preview.png)
+![Discrub Screenshot](https://github.com/eliasmurcray/discrub/blob/mainline/preview.png?)
 
 ## Dependencies
 Ensure the following dependencies are installed:
