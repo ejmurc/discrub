@@ -114,7 +114,7 @@ int main() {
       struct DiscordMessage* message = response->messages[i];
       if (message == NULL)
         continue;
-      if (message->type == 19) {
+      if (message->is_in_thread) {
         printf_verbose("Unarchiving thread for message <%s>\n", message->id,
                        message->channel_id);
         if (discrub_unarchive_thread(bio, token, message->channel_id)) {
