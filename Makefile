@@ -1,24 +1,7 @@
 CC ?= gcc
 CFLAGS = -std=c89 -Wall -Wextra
-INCLUDES = -Iinclude/
-OS := $(shell uname -s)
-
-ifeq ($(OS), Darwin)
-    ifeq ($(shell uname -m), arm64)
-        INCLUDES += -I/opt/homebrew/include
-        LIBS = -L/opt/homebrew/lib -lssl -lcrypto
-    else
-        INCLUDES += -I/usr/local/include
-        LIBS = -L/usr/local/lib -lssl -lcrypto
-    endif
-else ifeq ($(OS), Linux)
-    INCLUDES += -I/usr/include/openssl
-    LIBS = -L/usr/lib -lssl -lcrypto
-else
-    INCLUDES += -I"C:/OpenSSL/include"
-    LIBS = -L"C:/OpenSSL/lib" -lssl -lcrypto
-endif
-
+INCLUDES = $(shell pkg-config openssl --cflags)
+LIBS = $(shell pkg-config openssl --libs)
 BUILD = build
 SRCS = $(wildcard src/*.c)
 HEADERS = $(wildcard include/*.h)
