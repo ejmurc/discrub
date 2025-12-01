@@ -71,7 +71,8 @@ static char *get_config_dir(const char *appname) {
 
 char *credentials_filepath(const char *appname) {
     char *dir = get_config_dir(appname);
-    if (!dir) return NULL;
+    if (!dir)
+        return NULL;
     int len = snprintf(NULL, 0, "%s/credentials.txt", dir);
     char *filepath = malloc((size_t)len + 1);
     if (!filepath) {
@@ -100,9 +101,9 @@ int save_credentials(const char *filepath, const char *credentials) {
 }
 
 char *load_credentials(const char *filepath) {
-  if (!filepath) {
-    return NULL;
-  }
+    if (!filepath) {
+        return NULL;
+    }
     FILE *f = fopen(filepath, "r");
     if (!f) {
         return NULL;

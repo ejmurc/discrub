@@ -2,6 +2,7 @@
 #include <yyjson.h>
 
 #include "credentials.h"
+#include "discord_client.h"
 #include "log.h"
 #include "openssl_client.h"
 
@@ -24,11 +25,11 @@ int main(void) {
     LOG_OK("Inspecting credential cache: %s", filepath);
     char *credentials = load_credentials(filepath);
     if (credentials) {
-      LOG_OK("Cached credentials loaded successfully");
+        LOG_OK("Cached credentials loaded successfully");
         printf("%s\n", credentials);
         free(credentials);
     } else {
-      LOG_INFO("No cached credentials present; authentication required");
+        LOG_INFO("No cached credentials present; authentication required");
     }
     ssl_free(ssl);
     SSL_CTX_free(ctx);
