@@ -39,3 +39,25 @@ add_executable(discrub src/main.c)
 target_link_libraries(discrub PRIVATE discrub_lib)
 target_compile_options(discrub PRIVATE ${WARNING_FLAGS})
 
+find_program(CLANG_FORMAT clang-format)
+if(CLANG_FORMAT)
+  file(GLOB_RECURSE ALL_SOURCE_FILES
+    ${CMAKE_SOURCE_DIR}/src/*.c
+    ${CMAKE_SOURCE_DIR}/src/*.h
+    ${CMAKE_SOURCE_DIR}/include/*.h
+  )
+
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES}
+    COMMENT "Running clang-format on source files"
+    VERBATIM
+  )
+
+  add_custom_target(format-check
+    COMMAND ${CLANG_FORMAT} --dry-run --Werror ${ALL_SOURCE_FILES}
+    COMMENT "Checking formatting with clang-format"
+    VERBATIM
+  )
+else()
+  message(WARNING "clang-format not found, format targets will not be available")
+endif()

@@ -19,8 +19,8 @@
 
 SSL_CTX *ssl_ctx_new(void);
 
-SSL* ssl_new(SSL_CTX* ctx, const char* hostname, const char* port);
+SSL *ssl_new(SSL_CTX *ctx, const char *hostname, const char *port);
 
-void ssl_free(SSL* ssl);
+void ssl_free(SSL *ssl);
 
 #endif
