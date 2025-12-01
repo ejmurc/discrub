@@ -15,17 +15,22 @@ int main(void) {
     char *filepath = credentials_filepath(appname);
     LOG_INFO("Loading credentials from '%s'", filepath);
     char *credentials = load_credentials(filepath, app_password);
-    uid = strdup(strtok(credentials, "\0"));
-    token = strdup(strtok(NULL, "\0"));
-    if (!uid || !token) {
-      uid = NULL;
-      token = NULL;
+    if (credentials) {
+      uid = strdup(strtok(credentials, "\0"));
+      token = strdup(strtok(NULL, "\0"));
+      if (!uid || !token) {
+        uid = NULL;
+        token = NULL;
+      }
     }
     free(filepath);
     free(app_password);
+    if (!token) {
+      LOG_ERR("Failed to load credentials from cache");
+    }
   }
   if (!token) {
-    LOG_INFO("Attempting Discord login");
+    LOG_INFO("Trying Discord login");
     SSL_CTX *ctx = ssl_ctx_new();
     if (!ctx) {
       LOG_ERR("Failed to create SSL context");
