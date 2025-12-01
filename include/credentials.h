@@ -8,17 +8,22 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
+#include <conio.h>
 #include <direct.h>
 #include <io.h>
 #include <windows.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <termios.h>
 #include <unistd.h>
 #endif
 
 char *credentials_filepath(const char *appname);
 int save_credentials(const char *filepath, const char *credentials, const char *password);
 char *load_credentials(const char *filepath, const char *password);
+char *get_password(void);
+char *get_email(void);
+void flush_stdin(void);
 
 #endif

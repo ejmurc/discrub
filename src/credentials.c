@@ -10,6 +10,7 @@
 #define IV_SIZE 12
 #define TAG_SIZE 16
 #define KEY_SIZE 32
+#define MAX_EMAIL_LEN 320
 
 static int derive_key(const char *password, const unsigned char *salt, unsigned char *key) {
   EVP_KDF *kdf;
@@ -305,4 +306,70 @@ char *load_credentials(const char *filepath, const char *password) {
   OPENSSL_cleanse(encrypted, (size_t)size);
   free(encrypted);
   return credentials;
+}
+
+char *get_email(void) {
+  static char email[MAX_EMAIL_LEN + 1];
+  if (scanf("%320s", email) != 1) {
+    return NULL;
+  }
+  return email;
+}
+
+char *get_password(void) {
+  size_t capacity = 64;
+  size_t length = 0;
+  char *password = malloc(capacity);
+  int ch;
+  if (password == NULL)
+    return NULL;
+#ifdef _WIN32
+  while ((ch = _getch()) != '\r') {
+    if (ch == 8 && length > 0) {
+      printf("\b \b");
+      length--;
+    } else if (ch != 8 && ch >= 32) {
+      if (length >= capacity - 1) {
+        capacity *= 2;
+        char *temp = realloc(password, capacity);
+        if (temp == NULL) {
+          free(password);
+          return NULL;
+        }
+        password = temp;
+      }
+      password[length++] = ch;
+      printf("*");
+    }
+  }
+#else
+  struct termios oldt, newt;
+  tcgetattr(STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= (tcflag_t)~ECHO;
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  while ((ch = getchar()) != '\n' && ch != EOF) {
+    if (length >= capacity - 1) {
+      capacity *= 2;
+      char *temp = realloc(password, capacity);
+      if (temp == NULL) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        free(password);
+        return NULL;
+      }
+      password = temp;
+    }
+    password[length++] = (char)ch;
+  }
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+#endif
+  password[length] = '\0';
+  printf("\n");
+  return password;
+}
+
+void flush_stdin(void) {
+  int c;
+  while ((c = getchar()) != '\n' && c != EOF)
+    ;
 }
