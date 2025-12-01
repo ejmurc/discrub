@@ -25,6 +25,7 @@ find_package(OpenSSL REQUIRED)
 
 add_library(discrub_lib
   src/openssl_client.c
+  src/credentials.c
 )
 target_include_directories(discrub_lib PUBLIC include)
 target_link_libraries(discrub_lib
