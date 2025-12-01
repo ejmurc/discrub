@@ -7,6 +7,11 @@
 #include "openssl_client.h"
 
 int main(int argc, char **argv) {
+  if (argc < 2) {
+    LOG_ERR("Usage: %s <password>", argv[0]);
+    return 1;
+  }
+  const char *app_password = argv[1];
   SSL_CTX *ctx = ssl_ctx_new();
   if (!ctx) {
     LOG_ERR("Failed to create SSL context\n");
@@ -20,20 +25,16 @@ int main(int argc, char **argv) {
   }
   LOG_OK("Connected to discord.com:443");
   const char *appname = "discrub";
-  if (argc < 2) {
-
+  char *filepath = credentials_filepath(appname);
+  LOG_INFO("Loading credentials from '%s'", filepath);
+  char *credentials = load_credentials(filepath, app_password);
+  free(filepath);
+  if (credentials) {
+    LOG_OK("Loaded credentials successfully");
+    printf("%s\n", credentials);
+    free(credentials);
   } else {
-    char *filepath = credentials_filepath(appname);
-    LOG_INFO("Checking cache for authentication credentials at '%s'", filepath);
-    char *credentials = load_credentials(filepath, argv[1]);
-    free(filepath);
-    if (credentials) {
-      LOG_OK("Cached credentials loaded successfully");
-      printf("%s\n", credentials);
-      free(credentials);
-    } else {
-      LOG_INFO("Failed to load credentials from cache");
-    }
+    LOG_WARN("Credentials not found or invalid password");
   }
   ssl_free(ssl);
   SSL_CTX_free(ctx);
