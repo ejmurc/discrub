@@ -3,16 +3,6 @@ project(Discrub
   VERSION 0.1.0
   LANGUAGES C)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  if(NOT MSVC)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
-  endif()
-endif()
-
 option(ENABLE_SANITIZERS "Enable sanitizers (ASan, UBSan)" OFF)
 
 if(ENABLE_SANITIZERS AND NOT MSVC)
