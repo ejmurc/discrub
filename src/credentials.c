@@ -227,10 +227,11 @@ static char *get_config_dir(const char *appname) {
   return path;
 }
 
-char *credentials_filepath(const char *appname) {
+char *get_credentials_filepath(const char *appname) {
   char *dir = get_config_dir(appname);
-  if (!dir)
+  if (!dir) {
     return NULL;
+  }
   int len = snprintf(NULL, 0, "%s/credentials.enc", dir);
   char *filepath = malloc((size_t)len + 1);
   if (!filepath) {
