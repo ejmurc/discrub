@@ -4,16 +4,16 @@ discrub is a lightweight CLI tool for bulk Discord message management with custo
 
 ## Usage
 
-Build the project with:
+Build the project:
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-The resulting executable is located at `build/discrub`.
+The resulting executable will be available at `build/discrub`.
 
 ### Authentication
-Run `discrub` without arguments to authenticate. Credentials can be cached securely and reused in subsequent sessions.
+Run `discrub` with no arguments to authenticate. Credentials can be securely cached and reused across sessions.
 
 ## Development
 
@@ -25,20 +25,12 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
 
-Release build (default):
-
-```bash
-cmake -S . -B build
-cmake --build build
-```
-
-Quick rebuild:
+Rebuild:
 ```bash
 cmake --build build
 ```
 
 ### Sanitizers
-Enable sanitizers for debugging:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
@@ -46,14 +38,14 @@ cmake --build build
 ```
 
 ### Code Formatting
-This project uses `clang-format` to maintain consistent style.
+This project uses `clang-format` to enforce a consistent coding style.
 
-#### Format Files
+Format all files:
 ```bash
 cmake --build build --target format
 ```
 
-#### Check Formatting without Overwriting
+Check formatting without modifying files:
 ```bash
 cmake --build build --target format-check
 ```
@@ -65,7 +57,7 @@ Clean build artifacts:
 cmake --build build --target clean
 ```
 
-Full clean (recommended when switching configurations, sanitizer settings, or CMake options):
+Perform a full clean (recommended when switching build configurations, sanitizer settings, or CMake options):
 
 ```bash
 rm -rf build
