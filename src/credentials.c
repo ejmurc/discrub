@@ -1,10 +1,4 @@
 #include "credentials.h"
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/rand.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define SALT_SIZE 32
 #define IV_SIZE 12

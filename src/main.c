@@ -2,7 +2,7 @@
 #include "discord_client.h"
 #include "log.h"
 #include "openssl_client.h"
-#include <stdio.h>
+
 int main(void) {
   const char *appname = "discrub";
   char *uid = NULL;
@@ -37,6 +37,8 @@ int main(void) {
     }
     if (!token) {
       LOG_ERR("Failed to load credentials from cache");
+    } else {
+      LOG_OK("Loaded credentials successfully");
     }
   }
   SSL_CTX *ctx = ssl_ctx_new();
@@ -118,7 +120,7 @@ int main(void) {
   }
   free(credentials_filepath);
   free(app_password);
-  printf("%s %s\n", token, uid);
+  LOG_INFO("%s %s", token, uid);
   free(uid);
   free(token);
   ssl_free(ssl);
