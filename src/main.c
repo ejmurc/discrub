@@ -30,7 +30,7 @@ int main(void) {
     }
   }
   if (!token) {
-    LOG_INFO("Trying Discord login");
+    LOG_INFO("Trying Discord authentication");
     SSL_CTX *ctx = ssl_ctx_new();
     if (!ctx) {
       LOG_ERR("Failed to create SSL context");
@@ -62,16 +62,14 @@ int main(void) {
 
     // TODO: Call Discord API to get credentials
     // uid, token = discord_login(ssl, email, password);
+    if (discord_login(ssl, email, password, &uid, &token)) {
+      LOG_ERR("Failed to authenticate with Discord");
+    }
 
     free(password);
     ssl_free(ssl);
     SSL_CTX_free(ctx);
-    if (!token) {
-      LOG_ERR("Discord login failed");
-      return 1;
-    }
   }
-  LOG_OK("Credentials obtained successfully");
   printf("%s %s\n", token, uid);
   free(uid);
   free(token);
