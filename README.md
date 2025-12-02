@@ -32,6 +32,7 @@ cmake --build build
 
 ### Sanitizers
 
+Enable AddressSanitizer and UndefinedBehaviorSanitizer:
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_SANITIZERS=ON
 cmake --build build
