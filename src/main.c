@@ -106,7 +106,7 @@ int main(void) {
       if (!credentials) {
         LOG_ERR("Failed to allocate memory for credentials");
       } else {
-        if (snprintf(credentials, credentials_len + 1, credentials_fmt, uid, token) !=
+        if (snprintf(credentials, (size_t)credentials_len + 1, credentials_fmt, uid, token) !=
             credentials_len) {
           LOG_ERR("Failed to format credentials");
         } else if (save_credentials(credentials_filepath, credentials, app_password)) {

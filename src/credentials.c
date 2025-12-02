@@ -232,7 +232,7 @@ char *get_credentials_filepath(const char *appname) {
     free(dir);
     return NULL;
   }
-  snprintf(filepath, len + 1, "%s/credentials.enc", dir);
+  snprintf(filepath, (size_t)len + 1, "%s/credentials.enc", dir);
   free(dir);
   return filepath;
 }

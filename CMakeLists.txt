@@ -3,6 +3,25 @@ project(Discrub
   VERSION 0.1.0
   LANGUAGES C)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  if(NOT MSVC)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
+  endif()
+endif()
+
+option(ENABLE_SANITIZERS "Enable sanitizers (ASan, UBSan)" OFF)
+
+if(ENABLE_SANITIZERS AND NOT MSVC)
+  set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SANITIZER_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+  message(STATUS "Sanitizers enabled: AddressSanitizer, UndefinedBehaviorSanitizer")
+endif()
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)

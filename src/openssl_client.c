@@ -146,8 +146,8 @@ char *ssl_request(SSL *ssl, const char *method, const char *path, const char *ho
     if (!request) {
       return NULL;
     }
-    if (snprintf(request, len + 1, request_fmt, method, path, hostname, strlen(body), body) !=
-        len) {
+    if (snprintf(request, (size_t)len + 1, request_fmt, method, path, hostname, strlen(body),
+                 body) != len) {
       return NULL;
     }
   } else {
@@ -161,7 +161,7 @@ char *ssl_request(SSL *ssl, const char *method, const char *path, const char *ho
     if (!request) {
       return NULL;
     }
-    if (snprintf(request, len + 1, request_fmt, method, path, hostname) != len) {
+    if (snprintf(request, (size_t)len + 1, request_fmt, method, path, hostname) != len) {
       return NULL;
     }
   }
