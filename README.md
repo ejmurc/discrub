@@ -1,7 +1,5 @@
 # discrub
 
-discrub is a lightweight CLI tool for bulk Discord message management with customizable search queries.
-
 ## Usage
 
 Build the project:
@@ -11,9 +9,6 @@ cmake --build build
 ```
 
 The resulting executable will be available at `build/discrub`.
-
-### Authentication
-Run `discrub` with no arguments to authenticate. Credentials can be securely cached and reused across sessions.
 
 ## Development
 
@@ -52,14 +47,13 @@ cmake --build build --target format-check
 ```
 
 ### Cleaning
-Clean build artifacts:
 
+Clean
 ```bash
 cmake --build build --target clean
 ```
 
-Perform a full clean (recommended when switching build configurations, sanitizer settings, or CMake options):
-
+Full Clean
 ```bash
 rm -rf build
 ```
